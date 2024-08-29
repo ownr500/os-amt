@@ -7,6 +7,9 @@
 # Intellij
 .idea/
 
+# c# web api app settings
+appsettings.Development.json
+
 # User-specific files
 *.rsuser
 *.suo
