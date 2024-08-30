@@ -1,5 +1,6 @@
 ﻿using API.Controllers.DTO;
 using API.Extensions;
+using API.Models.Response;
 using API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,9 +18,10 @@ public class AuthController : ControllerBase
     }
     
     [HttpPost("register")]
-    public Task<ActionResult<RegisterResponseDto>> Register(
+    public async Task<ActionResult<RegisterResponseDto>> Register(
         [FromBody] RegisterRequestDto requestDto)
     {
-       return _userService.RegisterAsync(requestDto.ToRequest());
+        var response = await _userService.RegisterAsync(requestDto.ToRequest());
+        return response.ToDto();
     }
 }
