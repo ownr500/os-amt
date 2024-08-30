@@ -23,4 +23,11 @@ public class AuthController : ControllerBase
         var response = await _userService.RegisterAsync(requestDto.ToRequest());
         return response.ToDto();
     }
+
+    [HttpDelete("delete")]
+    public async Task<ActionResult<DeleteResponseDto>> Delete([FromQuery] string login)
+    {
+        var response = await _userService.DeleteAsync(login);
+        return response.ToDto();
+    }
 }
