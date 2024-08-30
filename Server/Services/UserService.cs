@@ -1,8 +1,6 @@
-﻿using API.Controllers.DTO;
-using API.Models.Request;
+﻿using API.Models.Request;
 using API.Models.Response;
 using API.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
 using System.Text;
 using API.Models;
