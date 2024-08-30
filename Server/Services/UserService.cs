@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using API.Models;
 using API.Models.Entitites;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Services;
 
@@ -34,6 +35,16 @@ public class UserService : IUserService
         return new RegisterResponse(user.Id);
     }
 
+    public async Task<DeleteResponse> DeleteAsync(string login)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Login == login);
+        if (user is null) return new DeleteResponse(null);
+
+        _dbContext.Users.Remove(user);
+        await _dbContext.SaveChangesAsync();
+        return new DeleteResponse(user.Id);
+    }
+
     private static string GeneratePasswordHash(string password)
     {
         using var sha256 = SHA256.Create();
@@ -43,6 +54,7 @@ public class UserService : IUserService
         {
             builder.Append(b.ToString("x2"));
         }
+
         return builder.ToString();
     }
 }
