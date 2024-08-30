@@ -25,4 +25,12 @@ public static class Mappers
             result ? null : "Registration failed"
                 );
     }
+    public static DeleteResponseDto ToDto(this DeleteResponse response)
+    {
+        var result = response.Id is not null;
+        return new DeleteResponseDto(
+            result,
+            result ? null : "Registration failed"
+                );
+    }
 }
