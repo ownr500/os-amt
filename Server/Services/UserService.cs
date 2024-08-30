@@ -30,12 +30,8 @@ public class UserService : IUserService
         };
 
         await _dbContext.Users.AddAsync(user);
-        int result = await _dbContext.SaveChangesAsync();
-        if (result > 0)
-        {
-            return new RegisterResponse(user.Id);
-        }
-        return new RegisterResponse(null);
+        await _dbContext.SaveChangesAsync();
+        return new RegisterResponse(user.Id);
     }
 
     private string GeneratePasswordHash(string password)
