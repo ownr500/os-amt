@@ -1,5 +1,6 @@
 ﻿using API.Controllers.DTO;
 using API.Models.Request;
+using API.Models.Response;
 
 namespace API.Extensions;
 
@@ -14,5 +15,14 @@ public static class Mappers
             dto.Login,
             dto.Password
         );
+    }
+
+    public static RegisterResponseDto ToDto(this RegisterResponse response)
+    {
+        var result = response.Id is not null;
+        return new RegisterResponseDto(
+            result,
+            result ? null : "Registration failed"
+                );
     }
 }
