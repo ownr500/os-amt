@@ -33,4 +33,22 @@ public static class Mappers
             result ? null : "Registration failed"
                 );
     }
+
+    public static ChangeRequest ToRequest(this ChangeRequestDto requestDto)
+    {
+        return new ChangeRequest(
+            requestDto.FirstName,
+            requestDto.Age,
+            requestDto.Password
+        );
+    }
+
+    public static ChangeResponseDto ToDto(this ChangeResponse response)
+    {
+        var result = response.Id is not null;
+        return new ChangeResponseDto(
+            result,
+            result ? null : "User update failed"
+        );
+    }
 }
