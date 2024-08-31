@@ -7,4 +7,5 @@ public interface IUserService
 {
     Task<RegisterResponse> RegisterAsync(RegisterRequest request);
     Task<DeleteResponse> DeleteAsync(string login);
+    Task<ChangeResponse> ChangeAsync(ChangeRequest toRequest);
 }

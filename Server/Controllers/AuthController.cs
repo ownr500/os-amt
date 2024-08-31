@@ -1,5 +1,6 @@
 ﻿using API.Controllers.DTO;
 using API.Extensions;
+using API.Models.Response;
 using API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +29,13 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<DeleteResponseDto>> Delete([FromQuery] string login)
     {
         var response = await _userService.DeleteAsync(login);
+        return response.ToDto();
+    }
+
+    [HttpPatch("change")]
+    public async Task<ActionResult<ChangeResponseDto>> Change([FromBody] ChangeRequestDto requestDto)
+    {
+        var response = await _userService.ChangeAsync(requestDto.ToRequest());
         return response.ToDto();
     }
 }

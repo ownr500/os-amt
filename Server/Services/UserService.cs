@@ -45,6 +45,11 @@ public class UserService : IUserService
         return new DeleteResponse(user.Id);
     }
 
+    public Task<ChangeResponse> ChangeAsync(ChangeRequest toRequest)
+    {
+        throw new NotImplementedException();
+    }
+
     private static string GeneratePasswordHash(string password)
     {
         using var sha256 = SHA256.Create();
