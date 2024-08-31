@@ -25,7 +25,7 @@ public class AuthController : ControllerBase
         return response.ToDto();
     }
 
-    [HttpDelete("delete")]
+    [HttpDelete]
     public async Task<ActionResult<DeleteResponseDto>> Delete([FromQuery] string login)
     {
         var response = await _userService.DeleteAsync(login);
