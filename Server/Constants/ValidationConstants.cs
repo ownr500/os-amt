@@ -8,5 +8,6 @@ public class ValidationConstants
     public const int MaxLoginLength = 12;
     public const int MinLoginLength = 5;
     public const int MaxPasswordLength = 25;
+    public const int MaxPasswordHashLength = 128;
     public const int MinPasswordLength = 5;
 }
