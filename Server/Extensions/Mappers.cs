@@ -51,4 +51,13 @@ public static class Mappers
             result ? null : "User update failed"
         );
     }
+
+    public static PasswordChangeModel ToModel(this PasswordChangeDto dto)
+    {
+        return new PasswordChangeModel(
+            dto.Login,
+            dto.OldPassword,
+            dto.NewPassword
+        );
+    }
 }
