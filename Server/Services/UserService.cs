@@ -21,6 +21,9 @@ public class UserService : IUserService
 
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
     {
+        var userExists = _dbContext.Users.Any(x => x.LoginNormalized == request.Login.ToLower());
+        if (userExists) return new RegisterResponse(null);
+        
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
