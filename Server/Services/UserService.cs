@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using API.Models;
 using API.Models.Entitites;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Services;
@@ -20,13 +21,14 @@ public class UserService : IUserService
 
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
     {
-        var user = new User
+        var user = new UserEntity
         {
             Id = Guid.NewGuid(),
             Age = request.Age,
             FirstName = request.FirstName,
             LastName = request.LastName,
             Login = request.Login,
+            LoginNormalized = request.Login.ToLower(),
             PasswordHash = GeneratePasswordHash(request.Password)
         };
 
@@ -48,6 +50,22 @@ public class UserService : IUserService
     public Task<ChangeResponse> ChangeAsync(ChangeRequest toRequest)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<bool> PasswordChangeAsync(PasswordChangeModel model)
+    {
+        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.LoginNormalized == model.Login.ToLower());
+
+        if (user == null)
+        {
+            return false;
+        }
+        if (user.PasswordHash != GeneratePasswordHash(model.OldPassword)) return false;
+        
+        user.PasswordHash = GeneratePasswordHash(model.NewPassword);
+        _dbContext.Users.Update(user);
+        await _dbContext.SaveChangesAsync();
+        return true;
     }
 
     private static string GeneratePasswordHash(string password)
