@@ -60,4 +60,11 @@ public static class Mappers
             dto.NewPassword
         );
     }
+
+    public static SinginModel ToModel(this SigninRequestDto dto)
+    {
+        return new SinginModel(
+            dto.Login,
+            dto.Password);
+    }
 }
