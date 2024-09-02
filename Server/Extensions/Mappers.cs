@@ -52,12 +52,13 @@ public static class Mappers
         );
     }
 
-    public static PasswordChangeModel ToModel(this PasswordChangeDto dto)
+    public static PasswordChangeModel ToModel(this PasswordChangeDto dto, Guid id)
     {
         return new PasswordChangeModel(
-            dto.Login,
-            dto.OldPassword,
-            dto.NewPassword
+            Id: id,
+            Login: dto.Login,
+            OldPassword: dto.OldPassword,
+            NewPassword: dto.NewPassword
         );
     }
 
