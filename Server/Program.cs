@@ -41,6 +41,7 @@ builder.Services.AddSwaggerGen(x =>
     });
 });
 
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
