@@ -5,7 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using API.Models;
 using API.Models.Entitites;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Services;
@@ -13,14 +12,17 @@ namespace API.Services;
 public class UserService : IUserService
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly ITokenService _tokenService;
 
-    public UserService(ApplicationDbContext dbContext)
+    public UserService(ApplicationDbContext dbContext, ITokenService tokenService)
     {
         _dbContext = dbContext;
+        _tokenService = tokenService;
     }
 
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
     {
+
         var userExists = _dbContext.Users.Any(x => x.LoginNormalized == request.Login.ToLower());
         if (userExists) return new RegisterResponse(null);
         
@@ -69,6 +71,14 @@ public class UserService : IUserService
         _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<UserEntity> Singin(SinginModel toModel)
+    {
+        return await _dbContext.Users.FirstAsync(x =>
+            x.LoginNormalized == toModel.Login.ToLower()
+            && x.PasswordHash == GeneratePasswordHash(toModel.Password)
+        );
     }
 
     private static string GeneratePasswordHash(string password)
