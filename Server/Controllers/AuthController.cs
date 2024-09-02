@@ -11,10 +11,12 @@ namespace API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ITokenService _tokenService;
 
-    public AuthController(IUserService userService)
+    public AuthController(IUserService userService, ITokenService tokenService)
     {
         _userService = userService;
+        _tokenService = tokenService;
     }
     
     [HttpPost("register")]
@@ -30,22 +32,13 @@ public class AuthController : ControllerBase
     {
         var user = await _userService.Singin(signinRequestDto.ToModel());
 
+        if (user == null)
+        {
+            return new SinginResponseDto(null, "User not found.");
+        }
 
-        // var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-        // if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer"))
-        // {
-        //     return Unauthorized();
-        // }
-        //
-        // var token = authHeader.Substring("Bearer".Length).Trim();
-        //
-        // try
-        // {
-        //     var claimsPrincipal = 
-        // }
-        // catch (SecurityTokenException  e)
-        // {
-        //     return Unauthorized("Invalid token");
-        // }
+        return new SinginResponseDto(
+            _tokenService.GenerateAuthToken(user), null
+        );
     }
 }
