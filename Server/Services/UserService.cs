@@ -75,10 +75,20 @@ public class UserService : IUserService
 
     public async Task<UserEntity> Singin(SinginModel toModel)
     {
-        return await _dbContext.Users.FirstAsync(x =>
-            x.LoginNormalized == toModel.Login.ToLower()
-            && x.PasswordHash == GeneratePasswordHash(toModel.Password)
-        );
+        UserEntity user = null;
+
+        try
+        {
+            user =  await _dbContext.Users.FirstAsync(x =>
+                x.LoginNormalized == toModel.Login.ToLower()
+                && x.PasswordHash == GeneratePasswordHash(toModel.Password)
+            );
+        }
+        catch (Exception e)
+        {
+        }
+
+        return user;
     }
 
     private static string GeneratePasswordHash(string password)
