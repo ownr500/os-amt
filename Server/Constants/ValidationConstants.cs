@@ -10,4 +10,5 @@ public class ValidationConstants
     public const int MaxPasswordLength = 25;
     public const int MaxPasswordHashLength = 128;
     public const int MinPasswordLength = 5;
+    public const int MaxTokenLength = 2048;
 }
