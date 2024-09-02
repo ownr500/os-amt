@@ -7,4 +7,5 @@ public interface ITokenService
 {
     string GenerateAuthToken(UserEntity user);
     ClaimsPrincipal ValidateToken(string token);
+    Task SaveToken(string token);
 }

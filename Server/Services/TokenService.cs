@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using API.Models;
 using API.Models.Entitites;
 using API.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
@@ -11,11 +12,13 @@ namespace API.Services;
 public class TokenService : ITokenService
 {
     private readonly JwtSecurityTokenHandler _tokenHandler;
+    private readonly ApplicationDbContext _dbContext;
     private readonly string secretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
 
-    public TokenService(JwtSecurityTokenHandler tokenHandler)
+    public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext)
     {
         _tokenHandler = tokenHandler;
+        _dbContext = dbContext;
     }
     public string GenerateAuthToken(UserEntity user)
     {
@@ -56,5 +59,16 @@ public class TokenService : ITokenService
         {
             throw new SecurityTokenException("Invalid token", e);
         }
+    }
+
+    public async Task SaveToken(string token)
+    {
+        var newToken = new TokenEntity
+        {
+            Id = Guid.NewGuid(),
+            JwtToken = token
+        };
+        _dbContext.Tokens.Add(newToken);
+        await _dbContext.SaveChangesAsync();
     }
 }

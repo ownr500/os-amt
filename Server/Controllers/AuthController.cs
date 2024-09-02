@@ -37,8 +37,12 @@ public class AuthController : ControllerBase
             return new SinginResponseDto(null, "User not found.");
         }
 
+        var token = _tokenService.GenerateAuthToken(user);
+
+        await _tokenService.SaveToken(token);
+        
         return new SinginResponseDto(
-            _tokenService.GenerateAuthToken(user), null
+            token, null
         );
     }
 }
