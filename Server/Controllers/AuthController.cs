@@ -2,7 +2,6 @@
 using API.Extensions;
 using API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 
 namespace API.Controllers;
 
