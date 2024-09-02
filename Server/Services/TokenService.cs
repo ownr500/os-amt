@@ -4,6 +4,7 @@ using System.Text;
 using API.Models;
 using API.Models.Entitites;
 using API.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Services;
@@ -36,7 +37,7 @@ public class TokenService : ITokenService
         return _tokenHandler.WriteToken(options);
     }
 
-    public ClaimsPrincipal ValidateToken(string token)
+    public async Task<ClaimsPrincipal> ValidateToken(string token)
     {
         var key = Encoding.ASCII.GetBytes(secretKey);
 
@@ -53,6 +54,14 @@ public class TokenService : ITokenService
             SecurityToken validatedToken;
             var principal = _tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
             return principal;
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            var tokenFromDb = await _dbContext.Tokens.FirstAsync(x => x.JwtToken == token);
+            _dbContext.Tokens.Remove(tokenFromDb);
+            await _dbContext.SaveChangesAsync();
+            
+            throw new SecurityTokenException("Token has expired.");
         }
         catch (Exception e)
         {
