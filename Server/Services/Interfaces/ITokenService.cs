@@ -7,5 +7,5 @@ public interface ITokenService
 {
     string GenerateAuthToken(UserEntity user);
     Task<ClaimsPrincipal> ValidateToken(string token);
-    Task SaveToken(string token);
+    Task AddTokenAsync(string token);
 }

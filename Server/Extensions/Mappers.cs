@@ -62,9 +62,9 @@ public static class Mappers
         );
     }
 
-    public static SinginModel ToModel(this SigninRequestDto dto)
+    public static SinginRequestModel ToModel(this SigninRequestDto dto)
     {
-        return new SinginModel(
+        return new SinginRequestModel(
             dto.Login,
             dto.Password);
     }
