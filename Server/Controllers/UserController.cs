@@ -15,12 +15,13 @@ public class UserController : ControllerBase
     {
         _userService = userService;
     }
-    
-    [HttpDelete]
-    public async Task<ActionResult<DeleteResponseDto>> Delete([FromQuery] string login)
+
+    [HttpDelete("{login}")]
+    public async Task<IActionResult> Delete([FromRoute] string login)
     {
-        var response = await _userService.DeleteAsync(login);
-        return response.ToDto();
+        var result = await _userService.DeleteAsync(login, HttpContext.RequestAborted);
+        if (result.IsSuccess) return NoContent();
+        return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
     }
 
     [HttpPatch]
