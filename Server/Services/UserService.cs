@@ -88,9 +88,9 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel requestModel)
+    public async Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel requestModel, CancellationToken ct)
     {
-        var user = await GetUserByLoginAsync(requestModel.Login, CancellationToken.None);
+        var user = await GetUserByLoginAsync(requestModel.Login, ct);
         if (user is null) return Result.Fail("User not found");
 
         var passwordCheck = user.PasswordHash == GeneratePasswordHash(requestModel.Password);
