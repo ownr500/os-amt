@@ -10,7 +10,7 @@ namespace API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class PasswordController
+public class PasswordController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly HttpContextAccessor _contextAccessor;
@@ -26,7 +26,7 @@ public class PasswordController
     [HttpPost]
     public async Task<IActionResult> Change([FromBody] PasswordChangeDto passwordChangeDto)
     {
-        var authHeader = _contextAccessor.HttpContext.Request.Headers["Authorization"].ToString();
+        var authHeader = HttpContext.Request.Headers.Authorization.ToString();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer"))
         {
             return new UnauthorizedResult();
@@ -34,8 +34,7 @@ public class PasswordController
 
         var token = authHeader.Substring("Bearer ".Length).Trim();
 
-        try
-        {
+   
             var claimsPrincipal = await _tokenService.ValidateToken(token);
             var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId != null)
@@ -43,11 +42,7 @@ public class PasswordController
                 var result = await _userService.PasswordChangeAsync(passwordChangeDto.ToModel(new Guid(userId)));
                 return result ? new OkResult() : new BadRequestResult();
             }
-        }
-        catch (Exception e)
-        {
-            throw new BadHttpRequestException("Something went wrong");
-        }
+     
         return new BadRequestResult();
     }
 }
