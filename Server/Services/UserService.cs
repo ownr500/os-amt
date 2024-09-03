@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using API.Models;
 using API.Models.Entitites;
+using FluentResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Services;
@@ -22,10 +23,9 @@ public class UserService : IUserService
 
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
     {
-
         var userExists = _dbContext.Users.Any(x => x.LoginNormalized == request.Login.ToLower());
         if (userExists) return new RegisterResponse(null);
-        
+
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
@@ -42,14 +42,14 @@ public class UserService : IUserService
         return new RegisterResponse(user.Id);
     }
 
-    public async Task<DeleteResponse> DeleteAsync(string login)
+    public async Task<Result> DeleteAsync(string login, CancellationToken ct)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Login == login);
-        if (user is null) return new DeleteResponse(null);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Login == login, ct);
+        if (user is null) return Result.Fail("User doesn't exist");
 
         _dbContext.Users.Remove(user);
-        await _dbContext.SaveChangesAsync();
-        return new DeleteResponse(user.Id);
+        await _dbContext.SaveChangesAsync(ct);
+        return Result.Ok();
     }
 
     public Task<ChangeResponse> ChangeAsync(ChangeRequest toRequest)
@@ -65,30 +65,25 @@ public class UserService : IUserService
         {
             return false;
         }
+
         if (user.PasswordHash != GeneratePasswordHash(model.OldPassword)) return false;
-        
+
         user.PasswordHash = GeneratePasswordHash(model.NewPassword);
         _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync();
         return true;
     }
 
-    public async Task<UserEntity> Singin(SinginModel toModel)
+    public async Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel toRequestModel)
     {
-        UserEntity user = null;
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x =>
+            x.LoginNormalized == toRequestModel.Login.ToLower()
+            && x.PasswordHash == GeneratePasswordHash(toRequestModel.Password)
+        );
 
-        try
-        {
-            user =  await _dbContext.Users.FirstAsync(x =>
-                x.LoginNormalized == toModel.Login.ToLower()
-                && x.PasswordHash == GeneratePasswordHash(toModel.Password)
-            );
-        }
-        catch (Exception e)
-        {
-        }
-
-        return user;
+        return user is not null
+            ? Result.Ok(new SinginReponseModel(_tokenService.GenerateAuthToken(user)))
+            : Result.Fail("Invalid credentials");
     }
 
     private static string GeneratePasswordHash(string password)
