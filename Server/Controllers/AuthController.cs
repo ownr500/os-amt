@@ -15,13 +15,16 @@ public class AuthController : ControllerBase
     {
         _userService = userService;
     }
-    
+
     [HttpPost("register")]
-    public async Task<ActionResult<RegisterResponseDto>> Register(
+    public async Task<IActionResult> Register(
         [FromBody] RegisterRequestDto requestDto)
     {
-        var response = await _userService.RegisterAsync(requestDto.ToRequest());
-        return response.ToDto();
+        var result = await _userService.RegisterAsync(requestDto.ToRequest());
+        if (result.IsSuccess) return Ok();
+        return new ConflictObjectResult(new BusinessErrorDto(
+            result.Errors.Select(x => x.Message).ToList()
+        ));
     }
 
     [HttpPost("signin")]

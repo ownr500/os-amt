@@ -25,10 +25,10 @@ public class UserService : IUserService
         _contextAccessor = contextAccessor;
     }
 
-    public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
+    public async Task<Result> RegisterAsync(RegisterRequest request)
     {
         var userExists = _dbContext.Users.Any(x => x.LoginNormalized == request.Login.ToLower());
-        if (userExists) return new RegisterResponse(null);
+        if (userExists) return Result.Fail(MessageConstants.UserAlreadyRegistered);
 
         var user = new UserEntity
         {
@@ -43,7 +43,7 @@ public class UserService : IUserService
 
         await _dbContext.Users.AddAsync(user);
         await _dbContext.SaveChangesAsync();
-        return new RegisterResponse(user.Id);
+        return Result.Ok();
     }
 
     public async Task<Result> DeleteAsync(string login, CancellationToken ct)

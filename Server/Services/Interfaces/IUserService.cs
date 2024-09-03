@@ -7,7 +7,7 @@ namespace API.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<RegisterResponse> RegisterAsync(RegisterRequest request);
+    Task<Result> RegisterAsync(RegisterRequest request);
     Task<Result> DeleteAsync(string login, CancellationToken ct);
     Task<Result> ChangeAsync(ChangeRequest сhangeRequest);
     Task<Result> PasswordChangeAsync(PasswordChangeModel model);
