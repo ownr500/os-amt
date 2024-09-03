@@ -44,7 +44,7 @@ public class UserService : IUserService
 
     public async Task<Result> DeleteAsync(string login, CancellationToken ct)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == login.ToLower(), ct);
+        var user = await GetUserByLoginAsync(login, ct);
         if (user is null) return Result.Fail("User doesn't exist");
 
         _dbContext.Users.Remove(user);
@@ -52,7 +52,7 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public Task<ChangeResponse> ChangeAsync(ChangeRequest toRequest)
+    public Task<Result> ChangeAsync(ChangeRequest toRequest)
     {
         throw new NotImplementedException();
     }
@@ -74,15 +74,14 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel toRequestModel)
+    public async Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel requestModel)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x =>
-            x.LoginNormalized == toRequestModel.Login.ToLower()
-            && x.PasswordHash == GeneratePasswordHash(toRequestModel.Password)
-        );
+        var user = await GetUserByLoginAsync(requestModel.Login, CancellationToken.None);
+        if (user is null) return Result.Fail("User not found");
+        
+        var passwordCheck = user.PasswordHash == GeneratePasswordHash(requestModel.Password);
 
-        return user is not null
-            ? Result.Ok(new SinginReponseModel(_tokenService.GenerateAuthToken(user)))
+        return passwordCheck ? Result.Ok(new SinginReponseModel(_tokenService.GenerateAuthToken(user))) 
             : Result.Fail("Invalid credentials");
     }
 
@@ -97,5 +96,10 @@ public class UserService : IUserService
         }
 
         return builder.ToString();
+    }
+
+    private async Task<UserEntity?> GetUserByLoginAsync(string login, CancellationToken ct)
+    {
+        return await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == login.ToLower(), ct);
     }
 }
