@@ -57,21 +57,21 @@ public class UserService : IUserService
         throw new NotImplementedException();
     }
 
-    public async Task<bool> PasswordChangeAsync(PasswordChangeModel model)
+    public async Task<Result> PasswordChangeAsync(PasswordChangeModel model)
     {
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.LoginNormalized == model.Login.ToLower());
 
         if (user == null)
         {
-            return false;
+            return Result.Fail("User not found");
         }
 
-        if (user.PasswordHash != GeneratePasswordHash(model.OldPassword)) return false;
+        if (user.PasswordHash != GeneratePasswordHash(model.OldPassword)) return Result.Fail("Old password doesn't match");
 
         user.PasswordHash = GeneratePasswordHash(model.NewPassword);
         _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync();
-        return true;
+        return Result.Ok();
     }
 
     public async Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel toRequestModel)

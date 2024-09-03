@@ -10,6 +10,6 @@ public interface IUserService
     Task<RegisterResponse> RegisterAsync(RegisterRequest request);
     Task<Result> DeleteAsync(string login, CancellationToken ct);
     Task<ChangeResponse> ChangeAsync(ChangeRequest toRequest);
-    Task<bool> PasswordChangeAsync(PasswordChangeModel model);
+    Task<Result> PasswordChangeAsync(PasswordChangeModel model);
     Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel toRequestModel);
 }
