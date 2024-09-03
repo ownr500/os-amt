@@ -4,7 +4,6 @@ using System.Text;
 using API.Models;
 using API.Models.Entitites;
 using API.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Services;

@@ -1,4 +1,5 @@
-﻿using API.Controllers.DTO;
+﻿using API.Constants;
+using API.Controllers.DTO;
 using API.Models.Request;
 using API.Models.Response;
 
@@ -22,7 +23,7 @@ public static class Mappers
         var result = response.Id is not null;
         return new RegisterResponseDto(
             result,
-            result ? null : "Registration failed"
+            result ? null : MessageConstants.RegistrationFailed
                 );
     }
     public static DeleteResponseDto ToDto(this DeleteResponse response)
@@ -30,7 +31,7 @@ public static class Mappers
         var result = response.Id is not null;
         return new DeleteResponseDto(
             result,
-            result ? null : "Registration failed"
+            result ? null : MessageConstants.RegistrationFailed
                 );
     }
 
@@ -47,7 +48,7 @@ public static class Mappers
         var result = response.Id is not null;
         return new ChangeResponseDto(
             result,
-            result ? null : "User update failed"
+            result ? null : MessageConstants.UserUpdateFailed
         );
     }
 

@@ -49,7 +49,7 @@ public class UserService : IUserService
     public async Task<Result> DeleteAsync(string login, CancellationToken ct)
     {
         var user = await GetUserByLoginAsync(login, ct);
-        if (user is null) return Result.Fail("User doesn't exist");
+        if (user is null) return Result.Fail(MessageConstants.UserNotFound);
 
         _dbContext.Users.Remove(user);
         await _dbContext.SaveChangesAsync(ct);
@@ -76,11 +76,11 @@ public class UserService : IUserService
 
         if (user == null)
         {
-            return Result.Fail("User not found");
+            return Result.Fail(MessageConstants.UserNotFound);
         }
 
         if (user.PasswordHash != GeneratePasswordHash(model.OldPassword))
-            return Result.Fail("Old password doesn't match");
+            return Result.Fail(MessageConstants.OldPasswordNotMatch);
 
         user.PasswordHash = GeneratePasswordHash(model.NewPassword);
         _dbContext.Users.Update(user);
@@ -91,13 +91,13 @@ public class UserService : IUserService
     public async Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel requestModel, CancellationToken ct)
     {
         var user = await GetUserByLoginAsync(requestModel.Login, ct);
-        if (user is null) return Result.Fail("User not found");
+        if (user is null) return Result.Fail(MessageConstants.UserNotFound);
 
         var passwordCheck = user.PasswordHash == GeneratePasswordHash(requestModel.Password);
 
         return passwordCheck
             ? Result.Ok(new SinginReponseModel(_tokenService.GenerateAuthToken(user)))
-            : Result.Fail("Invalid credentials");
+            : Result.Fail(MessageConstants.InvalidCredentials);
     }
 
     private static string GeneratePasswordHash(string password)
