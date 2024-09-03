@@ -2,6 +2,5 @@
 
 public record ChangeRequest(
     string FirstName,
-    int Age,
-    string Password
+    string LastName
 );

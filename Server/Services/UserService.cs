@@ -1,8 +1,10 @@
-﻿using API.Models.Request;
+﻿using System.Security.Claims;
+using API.Models.Request;
 using API.Models.Response;
 using API.Services.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
+using API.Constants;
 using API.Models;
 using API.Models.Entitites;
 using FluentResults;
@@ -14,11 +16,13 @@ public class UserService : IUserService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ITokenService _tokenService;
+    private readonly IHttpContextAccessor _contextAccessor;
 
-    public UserService(ApplicationDbContext dbContext, ITokenService tokenService)
+    public UserService(ApplicationDbContext dbContext, ITokenService tokenService, IHttpContextAccessor contextAccessor)
     {
         _dbContext = dbContext;
         _tokenService = tokenService;
+        _contextAccessor = contextAccessor;
     }
 
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
@@ -52,9 +56,18 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public Task<Result> ChangeAsync(ChangeRequest toRequest)
+    public async Task<Result> ChangeAsync(ChangeRequest changeRequest)
     {
-        throw new NotImplementedException();
+        var userId = GetUserIdFromContext();
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+        if (user is null) return Result.Fail(MessageConstants.UserNotFound);
+
+        user.FirstName = changeRequest.FirstName;
+        user.LastName = changeRequest.LastName;
+
+        _dbContext.Users.Update(user);
+        await _dbContext.SaveChangesAsync();
+        return Result.Ok();
     }
 
     public async Task<Result> PasswordChangeAsync(PasswordChangeModel model)
@@ -66,7 +79,8 @@ public class UserService : IUserService
             return Result.Fail("User not found");
         }
 
-        if (user.PasswordHash != GeneratePasswordHash(model.OldPassword)) return Result.Fail("Old password doesn't match");
+        if (user.PasswordHash != GeneratePasswordHash(model.OldPassword))
+            return Result.Fail("Old password doesn't match");
 
         user.PasswordHash = GeneratePasswordHash(model.NewPassword);
         _dbContext.Users.Update(user);
@@ -78,10 +92,11 @@ public class UserService : IUserService
     {
         var user = await GetUserByLoginAsync(requestModel.Login, CancellationToken.None);
         if (user is null) return Result.Fail("User not found");
-        
+
         var passwordCheck = user.PasswordHash == GeneratePasswordHash(requestModel.Password);
 
-        return passwordCheck ? Result.Ok(new SinginReponseModel(_tokenService.GenerateAuthToken(user))) 
+        return passwordCheck
+            ? Result.Ok(new SinginReponseModel(_tokenService.GenerateAuthToken(user)))
             : Result.Fail("Invalid credentials");
     }
 

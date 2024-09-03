@@ -9,7 +9,7 @@ public interface IUserService
 {
     Task<RegisterResponse> RegisterAsync(RegisterRequest request);
     Task<Result> DeleteAsync(string login, CancellationToken ct);
-    Task<ChangeResponse> ChangeAsync(ChangeRequest toRequest);
+    Task<Result> ChangeAsync(ChangeRequest сhangeRequest);
     Task<Result> PasswordChangeAsync(PasswordChangeModel model);
-    Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel toRequestModel);
+    Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel requestModel);
 }

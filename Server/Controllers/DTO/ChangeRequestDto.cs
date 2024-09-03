@@ -8,10 +8,7 @@ public record ChangeRequestDto(
     [StringLength(ValidationConstants.MaxLengthName, MinimumLength = ValidationConstants.MinLengthName)]
     [property: JsonPropertyName("firstName")]
     string FirstName,
-    [property: JsonPropertyName("age")]
-    [Range(ValidationConstants.MinAge, int.MaxValue)]
-    int Age,
-    [property: JsonPropertyName("password")]
-    [StringLength(ValidationConstants.MaxPasswordLength, MinimumLength = ValidationConstants.MinPasswordLength)]
-    string Password
+    [StringLength(ValidationConstants.MaxLengthName, MinimumLength = ValidationConstants.MinLengthName)]
+    [property: JsonPropertyName("lastName")]
+    string LastName
 );

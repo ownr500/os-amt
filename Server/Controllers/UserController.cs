@@ -1,11 +1,13 @@
 ﻿using API.Controllers.DTO;
 using API.Extensions;
 using API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class UserController : ControllerBase
 {
@@ -25,9 +27,10 @@ public class UserController : ControllerBase
     }
 
     [HttpPatch]
-    public async Task<ActionResult<ChangeResponseDto>> Change([FromBody] ChangeRequestDto requestDto)
+    public async Task<IActionResult> Change([FromBody] ChangeRequestDto requestDto)
     {
-        var response = await _userService.ChangeAsync(requestDto.ToRequest());
-        return response.ToDto();
+        var result = await _userService.ChangeAsync(requestDto.ToRequest());
+        if (result.IsSuccess) return Ok();
+        return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
     }
 }

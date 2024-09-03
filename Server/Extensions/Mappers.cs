@@ -38,8 +38,7 @@ public static class Mappers
     {
         return new ChangeRequest(
             requestDto.FirstName,
-            requestDto.Age,
-            requestDto.Password
+            requestDto.LastName
         );
     }
 
