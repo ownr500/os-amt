@@ -13,12 +13,14 @@ public class TokenService : ITokenService
 {
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly ApplicationDbContext _dbContext;
+    private readonly IHttpContextAccessor _contextAccessor;
     private readonly string secretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
 
-    public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext)
+    public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext, IHttpContextAccessor contextAccessor)
     {
         _tokenHandler = tokenHandler;
         _dbContext = dbContext;
+        _contextAccessor = contextAccessor;
     }
     public string GenerateAuthToken(UserEntity user)
     {
@@ -57,7 +59,8 @@ public class TokenService : ITokenService
         }
         catch (SecurityTokenExpiredException)
         {
-            var tokenFromDb = await _dbContext.Tokens.FirstAsync(x => x.JwtToken == token);
+            //todo FirstOrDefaultAsync
+            var tokenFromDb = await _dbContext.Tokens.FirstAsync(x => x.AuthToken == token);
             _dbContext.Tokens.Remove(tokenFromDb);
             await _dbContext.SaveChangesAsync();
             
@@ -69,14 +72,17 @@ public class TokenService : ITokenService
         }
     }
 
-    public async Task SaveToken(string token)
+    public async Task AddTokenAsync(string token)
     {
+        var context = _contextAccessor.HttpContext;
+        if (context is null) return;
+        
         var newToken = new TokenEntity
         {
             Id = Guid.NewGuid(),
-            JwtToken = token
+            AuthToken = token
         };
-        _dbContext.Tokens.Add(newToken);
+        await _dbContext.Tokens.AddAsync(newToken);
         await _dbContext.SaveChangesAsync();
     }
 }
