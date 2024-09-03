@@ -16,16 +16,18 @@ public class TokenService : ITokenService
     private readonly IHttpContextAccessor _contextAccessor;
     private readonly string secretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
 
-    public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext, IHttpContextAccessor contextAccessor)
+    public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext,
+        IHttpContextAccessor contextAccessor)
     {
         _tokenHandler = tokenHandler;
         _dbContext = dbContext;
         _contextAccessor = contextAccessor;
     }
+
     public string GenerateAuthToken(UserEntity user)
     {
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, user.Id.ToString()) };
-        
+
         var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.secretKey));
         var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
         var options = new JwtSecurityToken(
@@ -41,42 +43,24 @@ public class TokenService : ITokenService
 
     public async Task<ClaimsPrincipal> ValidateToken(string token)
     {
-        var key = Encoding.ASCII.GetBytes(secretKey);
-
-        try
+        var validationParameters = new TokenValidationParameters
         {
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-            };
-            SecurityToken validatedToken;
-            var principal = _tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-            return principal;
-        }
-        catch (SecurityTokenExpiredException)
-        {
-            //todo FirstOrDefaultAsync
-            var tokenFromDb = await _dbContext.Tokens.FirstAsync(x => x.AuthToken == token);
-            _dbContext.Tokens.Remove(tokenFromDb);
-            await _dbContext.SaveChangesAsync();
-            
-            throw new SecurityTokenException("Token has expired.");
-        }
-        catch (Exception e)
-        {
-            throw new SecurityTokenException("Invalid token", e);
-        }
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        };
+        SecurityToken validatedToken;
+        var principal = _tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+        return principal;
     }
 
     public async Task AddTokenAsync(string token)
     {
         var context = _contextAccessor.HttpContext;
         if (context is null) return;
-        
+
         var newToken = new TokenEntity
         {
             Id = Guid.NewGuid(),
