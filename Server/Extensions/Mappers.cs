@@ -17,38 +17,12 @@ public static class Mappers
             dto.Password
         );
     }
-
-    public static RegisterResponseDto ToDto(this RegisterResponse response)
-    {
-        var result = response.Id is not null;
-        return new RegisterResponseDto(
-            result,
-            result ? null : MessageConstants.RegistrationFailed
-                );
-    }
-    public static DeleteResponseDto ToDto(this DeleteResponse response)
-    {
-        var result = response.Id is not null;
-        return new DeleteResponseDto(
-            result,
-            result ? null : MessageConstants.RegistrationFailed
-                );
-    }
-
+    
     public static ChangeRequest ToRequest(this ChangeRequestDto requestDto)
     {
         return new ChangeRequest(
             requestDto.FirstName,
             requestDto.LastName
-        );
-    }
-
-    public static ChangeResponseDto ToDto(this ChangeResponse response)
-    {
-        var result = response.Id is not null;
-        return new ChangeResponseDto(
-            result,
-            result ? null : MessageConstants.UserUpdateFailed
         );
     }
 
