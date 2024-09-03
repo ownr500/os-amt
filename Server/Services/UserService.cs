@@ -102,4 +102,17 @@ public class UserService : IUserService
     {
         return await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == login.ToLower(), ct);
     }
+
+    private Guid GetUserIdFromContext()
+    {
+        var nameIdentifier = _contextAccessor.HttpContext?.User.Claims
+            .FirstOrDefault(
+                x => string.Equals(x.Value, ClaimTypes.NameIdentifier,
+                    StringComparison.InvariantCultureIgnoreCase))?.Value;
+        if (!Guid.TryParse(nameIdentifier, out var userId))
+        {
+            throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
+        }
+        return userId;
+    }
 }
