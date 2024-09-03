@@ -44,7 +44,7 @@ public class UserService : IUserService
 
     public async Task<Result> DeleteAsync(string login, CancellationToken ct)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == login, ct);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == login.ToLower(), ct);
         if (user is null) return Result.Fail("User doesn't exist");
 
         _dbContext.Users.Remove(user);
