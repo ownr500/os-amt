@@ -10,12 +10,10 @@ namespace API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly ITokenService _tokenService;
 
-    public AuthController(IUserService userService, ITokenService tokenService)
+    public AuthController(IUserService userService)
     {
         _userService = userService;
-        _tokenService = tokenService;
     }
     
     [HttpPost("register")]
@@ -27,21 +25,12 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("signin")]
-    public async Task<ActionResult<SinginResponseDto>> Signin([FromBody] SigninRequestDto signinRequestDto)
+    public async Task<ActionResult<SinginResponseDto>> SigninAsync([FromBody] SigninRequestDto signinRequestDto)
     {
-        var user = await _userService.Singin(signinRequestDto.ToModel());
+        var result = await _userService.Singin(signinRequestDto.ToModel());
 
-        if (user == null)
-        {
-            return new SinginResponseDto(null, "User not found.");
-        }
+        if (result.IsSuccess) return new SinginResponseDto(result.Value.AuthToken);
 
-        var token = _tokenService.GenerateAuthToken(user);
-
-        await _tokenService.SaveToken(token);
-        
-        return new SinginResponseDto(
-            token, null
-        );
+        return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
     }
 }
