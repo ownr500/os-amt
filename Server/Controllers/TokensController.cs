@@ -1,4 +1,5 @@
 ﻿using API.Controllers.DTO;
+using API.Extensions;
 using API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,6 @@ public class TokensController : ControllerBase
     {
         var result = await _tokenService.GenerateNewTokenFromRefreshTokenAsync(token,ct);
         if (result.IsSuccess) return new SinginResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
-        return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
+        return new ConflictObjectResult(new BusinessErrorDto(result.ToResult().GetErrors()));
     }
 }

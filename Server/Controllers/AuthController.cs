@@ -23,7 +23,7 @@ public class AuthController : ControllerBase
         var result = await _userService.RegisterAsync(requestDto.ToRequest());
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(
-            result.Errors.Select(x => x.Message).ToList()
+            result.GetErrors()
         ));
     }
 
@@ -34,6 +34,6 @@ public class AuthController : ControllerBase
 
         if (result.IsSuccess) return new SinginResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
 
-        return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
+        return new ConflictObjectResult(new BusinessErrorDto(result.ToResult().GetErrors()));
     }
 }

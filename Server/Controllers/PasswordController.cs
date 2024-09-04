@@ -23,6 +23,6 @@ public class PasswordController : ControllerBase
     {
         var result = await _userService.PasswordChangeAsync(passwordChangeDto.ToModel());
         if (result.IsSuccess) return new OkResult();
-        return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 }

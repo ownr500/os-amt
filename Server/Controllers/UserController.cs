@@ -23,7 +23,7 @@ public class UserController : ControllerBase
     {
         var result = await _userService.DeleteAsync(login, HttpContext.RequestAborted);
         if (result.IsSuccess) return NoContent();
-        return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 
     [HttpPatch]
@@ -31,6 +31,6 @@ public class UserController : ControllerBase
     {
         var result = await _userService.ChangeAsync(requestDto.ToRequest());
         if (result.IsSuccess) return Ok();
-        return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 }

@@ -1,7 +1,6 @@
-﻿using API.Constants;
-using API.Controllers.DTO;
+﻿using API.Controllers.DTO;
 using API.Models.Request;
-using API.Models.Response;
+using FluentResults;
 
 namespace API.Extensions;
 
@@ -40,5 +39,10 @@ public static class Mappers
         return new SinginRequestModel(
             dto.Login,
             dto.Password);
+    }
+
+    public static List<string> GetErrors(this Result result)
+    {
+        return result.Errors.Select(x => x.Message).ToList();
     }
 }
