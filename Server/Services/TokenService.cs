@@ -46,14 +46,16 @@ public class TokenService : ITokenService
 
     public string GenerateRefreshToken(UserEntity user)
     {
-        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, user.Id.ToString()) };
-        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.secretKey));
+        expirationDate = DateTime.UtcNow.AddDays(1);
+        
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId.ToString()) };
+        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
         var options = new JwtSecurityToken(
             "localhost",
             "Refresh",
             claims: claims,
-            expires: DateTime.Now.AddDays(1),
+            expires: expirationDate.UtcDateTime,
             signingCredentials: credentials
         );
 
@@ -140,7 +142,7 @@ public class TokenService : ITokenService
             UserId = user.Id,
             RefreshTokenExpireAt = GetTokenExpiration(refreshToken),
             IsActive = true,
-            CreatedAt = DateTimeOffset.Now
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 }
