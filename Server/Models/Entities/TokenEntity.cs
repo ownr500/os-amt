@@ -2,7 +2,7 @@
 using API.Constants;
 using Microsoft.EntityFrameworkCore;
 
-namespace API.Models.Entitites;
+namespace API.Models.Entities;
 
 [Index(nameof(AuthToken), IsUnique = true)]
 public class TokenEntity

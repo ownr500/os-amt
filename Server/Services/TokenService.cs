@@ -2,7 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using API.Models;
-using API.Models.Entitites;
+using API.Models.Entities;
 using API.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 

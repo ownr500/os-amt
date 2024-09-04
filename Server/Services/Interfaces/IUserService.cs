@@ -1,5 +1,4 @@
-﻿using API.Models.Entitites;
-using API.Models.Request;
+﻿using API.Models.Request;
 using API.Models.Response;
 using FluentResults;
 

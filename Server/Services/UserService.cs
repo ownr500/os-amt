@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using API.Constants;
 using API.Models;
-using API.Models.Entitites;
+using API.Models.Entities;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
 

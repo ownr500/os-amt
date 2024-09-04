@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using API.Models.Entitites;
+using API.Models.Entities;
 
 namespace API.Services.Interfaces;
 
