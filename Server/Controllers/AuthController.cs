@@ -32,7 +32,7 @@ public class AuthController : ControllerBase
     {
         var result = await _userService.SinginAsync(signinRequestDto.ToModel(), ct);
 
-        if (result.IsSuccess) return new SinginResponseDto(result.Value.AuthToken);
+        if (result.IsSuccess) return new SinginResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
 
         return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
     }

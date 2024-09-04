@@ -1,5 +1,6 @@
 ﻿namespace API.Controllers.DTO;
 
 public record SinginResponseDto(
-    string AuthToken
+    string AccessToken,
+    string RefreshToken
 );

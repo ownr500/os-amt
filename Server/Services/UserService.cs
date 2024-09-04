@@ -95,8 +95,35 @@ public class UserService : IUserService
 
         var passwordCheck = user.PasswordHash == GeneratePasswordHash(requestModel.Password);
 
+        string accessToken = String.Empty;
+        string refreshToken = string.Empty;
+
+        if (passwordCheck)
+        {
+            accessToken = _tokenService.GenerateAccessToken(user);
+            refreshToken = _tokenService.GenerateRefreshToken(user);
+
+            var token = new TokenEntity
+            {
+                Id = new Guid(),
+                User = user,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                UserId = user.Id,
+                RefreshTokenExpireAt = _tokenService.GetTokenExpiration(refreshToken),
+                IsActive = true,
+                CreatedAt = DateTimeOffset.Now
+            };
+
+            await _dbContext.AddAsync(token);
+            await _dbContext.SaveChangesAsync();
+        }
+        
         return passwordCheck
-            ? Result.Ok(new SinginReponseModel(_tokenService.GenerateAuthToken(user)))
+            ? Result.Ok(new SinginReponseModel(
+                accessToken,
+                refreshToken
+                ))
             : Result.Fail(MessageConstants.InvalidCredentials);
     }
 

@@ -23,7 +23,7 @@ public class TokenService : ITokenService
         _contextAccessor = contextAccessor;
     }
 
-    public string GenerateAuthToken(UserEntity user)
+    public string GenerateAccessToken(UserEntity user)
     {
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, user.Id.ToString()) };
 
@@ -40,6 +40,23 @@ public class TokenService : ITokenService
         return _tokenHandler.WriteToken(options);
     }
 
+    public string GenerateRefreshToken(UserEntity user)
+    {
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, user.Id.ToString()) };
+        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.secretKey));
+        var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+        var options = new JwtSecurityToken(
+            "localhost",
+            "API Key",
+            claims: claims,
+            expires: DateTime.Now.AddDays(1),
+            signingCredentials: credentials
+        );
+
+        return _tokenHandler.WriteToken(options);
+    }
+    
+    
     public async Task<ClaimsPrincipal> ValidateToken(string token)
     {
         var validationParameters = new TokenValidationParameters
@@ -53,6 +70,21 @@ public class TokenService : ITokenService
         SecurityToken validatedToken;
         var principal = _tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
         return principal;
+    }
+    
+    public DateTimeOffset GetTokenExpiration(string token)
+    {
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        };
+        SecurityToken validatedToken;
+        _tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+        return validatedToken.ValidTo;
     }
 
     public async Task AddTokenAsync(string token)
