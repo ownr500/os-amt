@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 using API.Constants;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,19 +11,21 @@ public class UserEntity
     [Key] public Guid Id { get; set; }
 
     [MaxLength(ValidationConstants.MaxLengthName)]
-    public string FirstName { get; set; }
+    public string FirstName { get; set; } = string.Empty;
 
     [MaxLength(ValidationConstants.MaxLengthName)]
-    public string LastName { get; set; }
+    public string LastName { get; set; } = string.Empty;
 
     public int Age { get; set; }
 
     [MaxLength(ValidationConstants.MaxLoginLength)]
-    public string Login { get; set; }
+    public string Login { get; set; } = string.Empty;
 
     [MaxLength(ValidationConstants.MaxLoginLength)]
-    public string LoginNormalized { get; set; }
+    public string LoginNormalized { get; set; } = string.Empty;
 
     [MaxLength(ValidationConstants.MaxPasswordHashLength)]
-    public string PasswordHash { get; set; }
+    public string PasswordHash { get; set; } = string.Empty;
+
+    public ICollection<TokenEntity> Tokens { get; set; } = new List<TokenEntity>();
 }
