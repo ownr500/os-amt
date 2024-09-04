@@ -28,4 +28,5 @@ public class UserEntity
     public string PasswordHash { get; set; } = string.Empty;
 
     public ICollection<TokenEntity> Tokens { get; set; } = new List<TokenEntity>();
+    public ICollection<UserRoleEntity> UserRoles { get; set; } = new List<UserRoleEntity>();
 }
