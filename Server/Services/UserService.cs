@@ -127,8 +127,7 @@ public class UserService : IUserService
     {
         var nameIdentifier = _contextAccessor.HttpContext?.User.Claims
             .FirstOrDefault(
-                x => string.Equals(x.Value, ClaimTypes.NameIdentifier,
-                    StringComparison.InvariantCultureIgnoreCase))?.Value;
+                x => string.Equals(x.Issuer, "localhost"))?.Value;
         if (!Guid.TryParse(nameIdentifier, out var userId))
         {
             throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
