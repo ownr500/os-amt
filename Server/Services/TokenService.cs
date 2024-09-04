@@ -1,9 +1,12 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using API.Constants;
 using API.Models;
 using API.Models.Entities;
 using API.Services.Interfaces;
+using FluentResults;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Services;
@@ -101,5 +104,23 @@ public class TokenService : ITokenService
         };
         await _dbContext.Tokens.AddAsync(newToken);
         await _dbContext.SaveChangesAsync();
+    }
+
+    public TokenEntity GenerateNewTokenEntity(UserEntity user)
+    {
+        var accessToken = GenerateAccessToken(user);
+        var refreshToken = GenerateRefreshToken(user);
+
+        return new TokenEntity
+        {
+            Id = new Guid(),
+            User = user,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            UserId = user.Id,
+            RefreshTokenExpireAt = GetTokenExpiration(refreshToken),
+            IsActive = true,
+            CreatedAt = DateTimeOffset.Now
+        };
     }
 }

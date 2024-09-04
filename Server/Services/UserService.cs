@@ -95,36 +95,19 @@ public class UserService : IUserService
 
         var passwordCheck = user.PasswordHash == GeneratePasswordHash(requestModel.Password);
 
-        string accessToken = String.Empty;
-        string refreshToken = string.Empty;
-
         if (passwordCheck)
         {
-            accessToken = _tokenService.GenerateAccessToken(user);
-            refreshToken = _tokenService.GenerateRefreshToken(user);
-
-            var token = new TokenEntity
-            {
-                Id = new Guid(),
-                User = user,
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                UserId = user.Id,
-                RefreshTokenExpireAt = _tokenService.GetTokenExpiration(refreshToken),
-                IsActive = true,
-                CreatedAt = DateTimeOffset.Now
-            };
-
+            var token = _tokenService.GenerateNewTokenEntity(user);
             await _dbContext.AddAsync(token);
             await _dbContext.SaveChangesAsync();
+
+            return Result.Ok(new SinginReponseModel(
+                token.AccessToken,
+                token.RefreshToken
+            ));
         }
         
-        return passwordCheck
-            ? Result.Ok(new SinginReponseModel(
-                accessToken,
-                refreshToken
-                ))
-            : Result.Fail(MessageConstants.InvalidCredentials);
+        return Result.Fail(MessageConstants.InvalidCredentials);
     }
 
     private static string GeneratePasswordHash(string password)
@@ -155,6 +138,7 @@ public class UserService : IUserService
         {
             throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
         }
+
         return userId;
     }
 }
