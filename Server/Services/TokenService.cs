@@ -4,6 +4,7 @@ using System.Text;
 using API.Constants;
 using API.Models;
 using API.Models.Entities;
+using API.Models.Response;
 using API.Services.Interfaces;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
@@ -58,8 +59,27 @@ public class TokenService : ITokenService
 
         return _tokenHandler.WriteToken(options);
     }
-    
-    
+
+    public async Task<Result<SinginReponseModel>> GenerateNewTokenFromRefreshToken(string token)
+    {
+        var tokenEntity = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.RefreshToken == token);
+        if (tokenEntity is not null && tokenEntity.IsActive && tokenEntity.RefreshTokenExpireAt < DateTimeOffset.Now)
+        {
+            tokenEntity.IsActive = false;
+            var accessToken = GenerateAccessToken(tokenEntity.User);
+            var refreshToken = GenerateRefreshToken(tokenEntity.User);
+
+            var newToken = GenerateNewTokenEntity(tokenEntity.User);
+            _dbContext.Tokens.Update(tokenEntity);
+            await _dbContext.Tokens.AddAsync(newToken);
+            await _dbContext.SaveChangesAsync();
+            return Result.Ok(new SinginReponseModel(accessToken, refreshToken));
+        }
+
+        return Result.Fail(MessageConstants.InvalidRefreshToken);
+    }
+
+
     public async Task<ClaimsPrincipal> ValidateToken(string token)
     {
         var validationParameters = new TokenValidationParameters
