@@ -47,7 +47,7 @@ public class TokenService : ITokenService
         var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
         var options = new JwtSecurityToken(
             "localhost",
-            "API Key",
+            "Refresh",
             claims: claims,
             expires: DateTime.Now.AddDays(1),
             signingCredentials: credentials
@@ -81,6 +81,8 @@ public class TokenService : ITokenService
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            ValidIssuer = "localhost",
+            ValidAudience = "Refresh"
         };
         SecurityToken validatedToken;
         _tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
