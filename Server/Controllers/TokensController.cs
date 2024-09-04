@@ -17,10 +17,11 @@ public class TokensController : ControllerBase
         _tokenService = tokenService;
     }
 
+    [AllowAnonymous]
     [HttpPost("refresh/{token}")]
-    public async Task<ActionResult<SinginResponseDto>> Refresh([FromRoute] string token)
+    public async Task<ActionResult<SinginResponseDto>> Refresh([FromRoute] string token, CancellationToken ct)
     {
-        var result = await _tokenService.GenerateNewTokenFromRefreshToken(token);
+        var result = await _tokenService.GenerateNewTokenFromRefreshTokenAsync(token,ct);
         if (result.IsSuccess) return new SinginResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
         return new ConflictObjectResult(new BusinessErrorDto(result.Errors.Select(x => x.Message).ToList()));
     }

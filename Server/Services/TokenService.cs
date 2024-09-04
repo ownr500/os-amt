@@ -17,7 +17,7 @@ public class TokenService : ITokenService
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly ApplicationDbContext _dbContext;
     private readonly IHttpContextAccessor _contextAccessor;
-    private readonly string secretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
+    private const string SecretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
 
     public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext,
         IHttpContextAccessor contextAccessor)
@@ -27,12 +27,12 @@ public class TokenService : ITokenService
         _contextAccessor = contextAccessor;
     }
 
-    public string GenerateAccessToken(UserEntity user)
+    public string GenerateAccessToken(Guid userId)
     {
-        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, user.Id.ToString()) };
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId.ToString()) };
 
-        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.secretKey));
-        var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+        var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
         var options = new JwtSecurityToken(
             "localhost",
             "API Key",
@@ -44,7 +44,7 @@ public class TokenService : ITokenService
         return _tokenHandler.WriteToken(options);
     }
 
-    public string GenerateRefreshToken(UserEntity user)
+    public string GenerateRefreshToken(Guid userId, out DateTimeOffset expirationDate)
     {
         expirationDate = DateTime.UtcNow.AddDays(1);
         
@@ -62,56 +62,19 @@ public class TokenService : ITokenService
         return _tokenHandler.WriteToken(options);
     }
 
-    public async Task<Result<SinginReponseModel>> GenerateNewTokenFromRefreshToken(string token)
+    public async Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
-        var tokenEntity = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.RefreshToken == token);
-        if (tokenEntity is not null && tokenEntity.IsActive && tokenEntity.RefreshTokenExpireAt < DateTimeOffset.Now)
+        var tokenEntity = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.RefreshToken == token, cancellationToken: ct);
+        if (tokenEntity is not null && tokenEntity.IsActive && tokenEntity.RefreshTokenExpireAt > DateTimeOffset.UtcNow)
         {
             tokenEntity.IsActive = false;
-            var accessToken = GenerateAccessToken(tokenEntity.User);
-            var refreshToken = GenerateRefreshToken(tokenEntity.User);
-
-            var newToken = GenerateNewTokenEntity(tokenEntity.User);
+            var tokenModel = await GenerateNewTokenModelAsync(tokenEntity.UserId, ct);
             _dbContext.Tokens.Update(tokenEntity);
-            await _dbContext.Tokens.AddAsync(newToken);
-            await _dbContext.SaveChangesAsync();
-            return Result.Ok(new SinginReponseModel(accessToken, refreshToken));
+            await _dbContext.SaveChangesAsync(ct);
+            return Result.Ok(tokenModel);
         }
 
         return Result.Fail(MessageConstants.InvalidRefreshToken);
-    }
-
-
-    public async Task<ClaimsPrincipal> ValidateToken(string token)
-    {
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-        };
-        SecurityToken validatedToken;
-        var principal = _tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-        return principal;
-    }
-    
-    public DateTimeOffset GetTokenExpiration(string token)
-    {
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-            ValidIssuer = "localhost",
-            ValidAudience = "Refresh"
-        };
-        SecurityToken validatedToken;
-        _tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-        return validatedToken.ValidTo;
     }
 
     public async Task AddTokenAsync(string token)
@@ -128,21 +91,25 @@ public class TokenService : ITokenService
         await _dbContext.SaveChangesAsync();
     }
 
-    public TokenEntity GenerateNewTokenEntity(UserEntity user)
+    public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, CancellationToken ct)
     {
-        var accessToken = GenerateAccessToken(user);
-        var refreshToken = GenerateRefreshToken(user);
+        var accessToken = GenerateAccessToken(userId);
+        var refreshToken = GenerateRefreshToken(userId, out var expirationDate);
 
-        return new TokenEntity
+        var token =  new TokenEntity
         {
-            Id = new Guid(),
-            User = user,
+            Id = Guid.NewGuid(),
             AccessToken = accessToken,
             RefreshToken = refreshToken,
-            UserId = user.Id,
-            RefreshTokenExpireAt = GetTokenExpiration(refreshToken),
+            UserId = userId,
+            RefreshTokenExpireAt = expirationDate,
             IsActive = true,
             CreatedAt = DateTimeOffset.UtcNow
         };
+        
+        await _dbContext.AddAsync(token, ct);
+        await _dbContext.SaveChangesAsync(ct);
+
+        return new TokenModel(accessToken, refreshToken);
     }
 }
