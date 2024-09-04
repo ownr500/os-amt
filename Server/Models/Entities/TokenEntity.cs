@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Models.Entities;
 
-[Index(nameof(AuthToken), IsUnique = true)]
+[Index(nameof(AccessToken), IsUnique = true)]
 [Index(nameof(RefreshToken), IsUnique = true)]
 public class TokenEntity
 {
@@ -13,7 +13,7 @@ public class TokenEntity
     public Guid UserId { get; set; }
 
     [MaxLength(ValidationConstants.MaxTokenLength)]
-    public string AuthToken { get; set; } = string.Empty;
+    public string AccessToken { get; set; } = string.Empty;
 
     [MaxLength(ValidationConstants.MaxTokenLength)]
     public string RefreshToken { get; set; } = string.Empty;

@@ -63,7 +63,7 @@ public class TokenService : ITokenService
         var newToken = new TokenEntity
         {
             Id = Guid.NewGuid(),
-            AuthToken = token
+            AccessToken = token
         };
         await _dbContext.Tokens.AddAsync(newToken);
         await _dbContext.SaveChangesAsync();
