@@ -10,5 +10,5 @@ public interface IUserService
     Task<Result> DeleteAsync(string login, CancellationToken ct);
     Task<Result> ChangeAsync(ChangeRequest сhangeRequest);
     Task<Result> PasswordChangeAsync(PasswordChangeModel model);
-    Task<Result<SinginReponseModel>> SinginAsync(SinginRequestModel requestModel, CancellationToken ct);
+    Task<Result<SinginReponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct);
 }
