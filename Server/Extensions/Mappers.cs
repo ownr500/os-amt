@@ -1,4 +1,6 @@
 ﻿using API.Controllers.DTO;
+using API.Models;
+using API.Models.Entities;
 using API.Models.Request;
 using FluentResults;
 
@@ -48,5 +50,34 @@ public static class Mappers
     public static List<string> GetErrors<T>(this Result<T> result)
     {
         return result.Errors.Select(x => x.Message).ToList();
+    }
+
+    public static UserModel ToModel(this UserEntity user)
+    {
+        return new UserModel(
+           user.Id,
+           user.FirstName,
+           user.LastName,
+           user.Login,
+           user.UserRoles.Select(x => x.Role.RoleName).ToList()
+            );
+    }
+
+    public static List<UserDto> ToDto(this List<UserModel> list)
+    {
+        List<UserDto> userDtos = new List<UserDto>();
+
+        foreach (var model in list)
+        {
+            userDtos.Add(new UserDto(
+                model.UserId,
+                model.FirstName,
+                model.LastName,
+                model.Login,
+                model.Roles
+                ));
+        }
+
+        return userDtos;
     }
 }
