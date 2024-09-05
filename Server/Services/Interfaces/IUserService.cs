@@ -1,4 +1,5 @@
-﻿using API.Models.Request;
+﻿using API.Models;
+using API.Models.Request;
 using API.Models.Response;
 using FluentResults;
 
@@ -11,4 +12,5 @@ public interface IUserService
     Task<Result> ChangeAsync(ChangeRequest сhangeRequest);
     Task<Result> PasswordChangeAsync(PasswordChangeModel model);
     Task<Result<SinginReponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct);
+    Task<List<UserModel>> GetUsers(CancellationToken ct);
 }
