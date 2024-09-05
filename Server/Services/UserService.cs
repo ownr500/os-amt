@@ -131,7 +131,7 @@ public class UserService : IUserService
         await _dbContext.AddAsync(adminRole, ct);
         _dbContext.Update(user);
         await _dbContext.SaveChangesAsync(ct);
-        //TODO отозвать токен
+        await RevokeTokens(userId, ct);
         return Result.Ok();
     }
 
@@ -142,6 +142,25 @@ public class UserService : IUserService
         tokens.ForEach(x => x.IsActive = false);
         _dbContext.Update(tokens);
         await _dbContext.SaveChangesAsync(ct);
+        return Result.Ok();
+    }
+
+    public async Task<Result> UserToAdmin(MakeUserAdminModel model)
+    {
+        if(!string.Equals(model.SuperAdminPassword, ValidationConstants.SuperPassword)) return Result.Fail(MessageConstants.WrongPassword);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == model.Login.ToLower());
+        if (user is null) return Result.Fail(MessageConstants.UserNotFound);
+        
+        var adminRoleEntity = await _dbContext.Roles.FirstOrDefaultAsync(x => x.RoleName == RoleName.Admin);
+        var adminRole = new UserRoleEntity
+        {
+            Id = Guid.NewGuid(),
+            RoleId = adminRoleEntity.Id
+        };
+        user.UserRoles.Add(adminRole);
+        await _dbContext.AddAsync(adminRole);
+        _dbContext.Update(user);
+        await _dbContext.SaveChangesAsync();
         return Result.Ok();
     }
 
