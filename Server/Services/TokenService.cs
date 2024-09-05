@@ -4,6 +4,7 @@ using System.Text;
 using API.Constants;
 using API.Models;
 using API.Models.Entities;
+using API.Models.enums;
 using API.Models.Response;
 using API.Services.Interfaces;
 using FluentResults;
@@ -27,9 +28,17 @@ public class TokenService : ITokenService
         _contextAccessor = contextAccessor;
     }
 
-    public string GenerateAccessToken(Guid userId)
+    public string GenerateAccessToken(Guid userId, List<UserRoleEntity> roles)
     {
-        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId.ToString()) };
+        var adminRoleFound = roles.FirstOrDefault(x => x.Role.RoleName == RoleName.Admin);
+
+        var role = adminRoleFound is null ? RoleName.User.ToString() : RoleName.Admin.ToString();
+        
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId.ToString()),
+            new(ClaimTypes.Role, RoleName.Admin.ToString())
+        };
 
         var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
@@ -93,7 +102,9 @@ public class TokenService : ITokenService
 
     public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, CancellationToken ct)
     {
-        var accessToken = GenerateAccessToken(userId);
+        var user = await _dbContext.Users.Include(x => x.UserRoles).FirstOrDefaultAsync(x => x.Id == userId, ct);
+        
+        var accessToken = GenerateAccessToken(userId, user.UserRoles.ToList());
         var refreshToken = GenerateRefreshToken(userId, out var expirationDate);
 
         var token =  new TokenEntity
