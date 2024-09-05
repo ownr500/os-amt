@@ -14,4 +14,5 @@ public interface IUserService
     Task<Result<SinginReponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct);
     Task<List<UserModel>> GetUsers(CancellationToken ct);
     Task<Result> MakeUserAdmin(Guid userId, CancellationToken ct);
+    Task<Result> RevokeTokens(Guid userId, CancellationToken ct);
 }

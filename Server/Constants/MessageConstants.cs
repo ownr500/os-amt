@@ -13,4 +13,5 @@ public class MessageConstants
     public const string InvalidRefreshToken = "Invalid refresh token";
     public const string UserHasNoRoles = "User has no roles";
     public const string UserAlreadyAdmin = "User already admin";
+    public const string NoActiveTokens = "User has no active authorizations";
 }

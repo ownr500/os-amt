@@ -135,6 +135,16 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
+    public async Task<Result> RevokeTokens(Guid userId, CancellationToken ct)
+    {
+        List<TokenEntity> tokens = _dbContext.Tokens.Where(x => x.UserId == userId && x.IsActive == true).ToList();
+        if (tokens is null) return Result.Fail(MessageConstants.NoActiveTokens);
+        tokens.ForEach(x => x.IsActive = false);
+        _dbContext.Update(tokens);
+        await _dbContext.SaveChangesAsync(ct);
+        return Result.Ok();
+    }
+
     private static string GeneratePasswordHash(string password)
     {
         using var sha256 = SHA256.Create();
