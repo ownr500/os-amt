@@ -24,6 +24,6 @@ public class TokensController : ControllerBase
     {
         var result = await _tokenService.GenerateNewTokenFromRefreshTokenAsync(token,ct);
         if (result.IsSuccess) return new SinginResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
-        return new ConflictObjectResult(new BusinessErrorDto(result.ToResult().GetErrors()));
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 }

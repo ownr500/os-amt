@@ -45,4 +45,8 @@ public static class Mappers
     {
         return result.Errors.Select(x => x.Message).ToList();
     }
+    public static List<string> GetErrors<T>(this Result<T> result)
+    {
+        return result.Errors.Select(x => x.Message).ToList();
+    }
 }
