@@ -1,4 +1,6 @@
-﻿namespace API.Constants;
+﻿using FluentResults;
+
+namespace API.Constants;
 
 public class MessageConstants
 {
@@ -9,4 +11,6 @@ public class MessageConstants
     public const string OldPasswordNotMatch = "Old password doesn't match";
     public const string UserUpdateFailed = "User update failed";
     public const string InvalidRefreshToken = "Invalid refresh token";
+    public const string UserHasNoRoles = "User has no roles";
+    public const string UserAlreadyAdmin = "User already admin";
 }

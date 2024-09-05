@@ -26,4 +26,12 @@ public class AdminController : ControllerBase
             result.ToDtoList()
         );
     }
+
+    [HttpPost("makeAdmin")]
+    public async Task<IActionResult> MakeUserAdmin([FromQuery] Guid userId, CancellationToken ct)
+    {
+        var result = await _userService.MakeUserAdmin(userId, ct);
+        if (result.IsSuccess) return Ok();
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
+    }
 }

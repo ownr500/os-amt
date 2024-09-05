@@ -8,6 +8,7 @@ using API.Constants;
 using API.Extensions;
 using API.Models;
 using API.Models.Entities;
+using API.Models.enums;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -110,6 +111,28 @@ public class UserService : IUserService
     {
         var users = await _dbContext.Users.ToListAsync(ct);
         return users.Select(x => x.ToModel()).ToList();
+    }
+
+    public async Task<Result> MakeUserAdmin(Guid userId, CancellationToken ct)
+    {
+        var user = await _dbContext.Users.Include(x => x.UserRoles)
+            .FirstOrDefaultAsync(x => x.Id == userId, ct);
+        if (user.UserRoles is null) return Result.Fail(MessageConstants.UserHasNoRoles);
+        var adminRoleFound = user.UserRoles.ToList().Any(x => x.Role.RoleName == RoleName.Admin);
+        if (adminRoleFound) return Result.Fail(MessageConstants.UserAlreadyAdmin);
+
+        var adminRoleEntity = await _dbContext.Roles.FirstOrDefaultAsync(x => x.RoleName == RoleName.Admin, ct);
+        var adminRole = new UserRoleEntity
+        {
+            Id = Guid.NewGuid(),
+            RoleId = adminRoleEntity.Id
+        };
+        user.UserRoles.Add(adminRole);
+        await _dbContext.AddAsync(adminRole, ct);
+        _dbContext.Update(user);
+        await _dbContext.SaveChangesAsync(ct);
+        //TODO отозвать токен
+        return Result.Ok();
     }
 
     private static string GeneratePasswordHash(string password)
