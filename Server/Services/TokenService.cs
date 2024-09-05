@@ -53,11 +53,18 @@ public class TokenService : ITokenService
         return _tokenHandler.WriteToken(options);
     }
 
-    public string GenerateRefreshToken(Guid userId, out DateTimeOffset expirationDate)
+    public string GenerateRefreshToken(Guid userId, List<UserRoleEntity> roles, out DateTimeOffset expirationDate)
     {
         expirationDate = DateTime.UtcNow.AddDays(1);
         
-        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId.ToString()) };
+        var adminRoleFound = roles.FirstOrDefault(x => x.Role.RoleName == RoleName.Admin);
+        var role = adminRoleFound is null ? RoleName.User.ToString() : RoleName.Admin.ToString();
+        
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId.ToString()),
+            new(ClaimTypes.Role, role)
+        };
         var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
         var options = new JwtSecurityToken(
@@ -105,7 +112,7 @@ public class TokenService : ITokenService
         var user = await _dbContext.Users.Include(x => x.UserRoles).FirstOrDefaultAsync(x => x.Id == userId, ct);
         
         var accessToken = GenerateAccessToken(userId, user.UserRoles.ToList());
-        var refreshToken = GenerateRefreshToken(userId, out var expirationDate);
+        var refreshToken = GenerateRefreshToken(userId, user.UserRoles.ToList(), out var expirationDate);
 
         var token =  new TokenEntity
         {
