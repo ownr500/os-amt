@@ -79,4 +79,11 @@ public static class Mappers
             model.Roles
         );
     }
+
+    public static MakeUserAdminModel ToModel(this UserToAdminDto dto)
+    {
+        return new MakeUserAdminModel(
+            dto.Login,
+            dto.SuperPassword);
+    }
 }
