@@ -1,5 +1,6 @@
 ﻿using API.Controllers.DTO;
 using API.Extensions;
+using API.Models.enums;
 using API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = nameof(RoleName.Admin))]
 [Route("api/[controller]")]
 public class AdminController : ControllerBase
 {
@@ -22,7 +23,7 @@ public class AdminController : ControllerBase
     {
         var result = await _userService.GetUsers(ct);
         return new UserListResponseDto(
-            result.ToDto()
+            result.ToDtoList()
         );
     }
 }
