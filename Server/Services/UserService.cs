@@ -7,6 +7,7 @@ using System.Text;
 using API.Constants;
 using API.Models;
 using API.Models.Entities;
+using API.Models.enums;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -103,6 +104,30 @@ public class UserService : IUserService
             tokenModel.RefreshToken
         ));
 
+    }
+
+    public async Task<List<UserModel>> GetUsers(CancellationToken ct)
+    {
+        var users = await _dbContext.Users.ToListAsync(ct);
+        List<UserModel> models = new List<UserModel>();
+
+        foreach (var user in users)
+        {
+            List<RoleType> roles = new List<RoleType>();
+            foreach (var role in user.UserRoles)
+            {
+                roles.Add(role.Role.RoleName);
+            }
+            models.Add(new UserModel(
+                user.Id,
+                user.FirstName,
+                user.LastName,
+                user.Login,
+                roles
+            ));
+        }
+
+        return models;
     }
 
     private static string GeneratePasswordHash(string password)
