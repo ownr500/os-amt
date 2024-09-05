@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using API.Middleware;
 using API.Models;
 using API.Services;
 using API.Services.Interfaces;
@@ -47,6 +48,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<JwtSecurityTokenHandler>();
+builder.Services.AddScoped<RevokedTokenMiddleware>();
 
 builder.Services.AddAuthentication(x =>
 {
@@ -77,5 +79,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<RevokedTokenMiddleware>();
 app.MapControllers();
 await app.RunAsync();

@@ -130,4 +130,9 @@ public class TokenService : ITokenService
 
         return new TokenModel(accessToken, refreshToken);
     }
+
+    public Task<bool> CheckActiveToken(string header)
+    {
+        return Task.FromResult(true);
+    }
 }

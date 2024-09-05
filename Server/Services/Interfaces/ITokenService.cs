@@ -9,4 +9,5 @@ public interface ITokenService
 {
     Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct);
     Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, CancellationToken ct);
+    Task<bool> CheckActiveToken(string header);
 }
