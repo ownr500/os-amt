@@ -137,7 +137,6 @@ public class TokenService : ITokenService
         var headerArray = header.ToString().Split(' ');
         if (headerArray.Length == 2)
         {
-            //TODO check if token is revoked
             var token = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.AccessToken == headerArray[1]);
             if (token is not null && token.IsActive) return true;
         }
