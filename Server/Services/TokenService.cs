@@ -9,6 +9,7 @@ using API.Models.Response;
 using API.Services.Interfaces;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Services;
@@ -131,8 +132,16 @@ public class TokenService : ITokenService
         return new TokenModel(accessToken, refreshToken);
     }
 
-    public Task<bool> CheckActiveToken(string header)
+    public async Task<bool> CheckActiveToken(StringValues header)
     {
-        return Task.FromResult(true);
+        var headerArray = header.ToString().Split(' ');
+        if (headerArray.Length == 2)
+        {
+            //TODO check if token is revoked
+            var token = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.AccessToken == headerArray[1]);
+            if (token is not null && token.IsActive) return true;
+        }
+        
+        return false;
     }
 }

@@ -1,5 +1,4 @@
 ﻿using API.Services.Interfaces;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
 namespace API.Middleware;
@@ -12,23 +11,20 @@ internal sealed class RevokedTokenMiddleware : IMiddleware
     {
         _tokenService = tokenService;
     }
+
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        if(context.Request.Headers
+        if (context.Request.Headers
             .TryGetValue(HeaderNames.Authorization, out var header))
         {
-            var headerArray = header.ToString().Split(' ');
-            if (headerArray.Length == 2)
+            var result = await _tokenService.CheckActiveToken(header);
+            if (!result)
             {
-                var result = await _tokenService.CheckActiveToken(headerArray[1]);
-                if (!result)
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return;
-                }
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return;
             }
         }
-        
+
         await next(context);
     }
 }

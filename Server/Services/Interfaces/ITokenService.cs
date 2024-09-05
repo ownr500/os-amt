@@ -1,7 +1,6 @@
-﻿using System.Security.Claims;
-using API.Models.Entities;
-using API.Models.Response;
+﻿using API.Models.Response;
 using FluentResults;
+using Microsoft.Extensions.Primitives;
 
 namespace API.Services.Interfaces;
 
@@ -9,5 +8,5 @@ public interface ITokenService
 {
     Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct);
     Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, CancellationToken ct);
-    Task<bool> CheckActiveToken(string header);
+    Task<bool> CheckActiveToken(StringValues header);
 }
