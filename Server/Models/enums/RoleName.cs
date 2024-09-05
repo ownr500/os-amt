@@ -1,6 +1,6 @@
 ﻿namespace API.Models.enums;
 
-public enum RoleType
+public enum RoleName
 {
     Admin = 1,
     User = 2

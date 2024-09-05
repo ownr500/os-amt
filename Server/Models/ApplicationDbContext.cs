@@ -24,12 +24,12 @@ public class ApplicationDbContext : DbContext
             new RoleEntity
             {
                 Id = Guid.NewGuid(),
-                RoleName = RoleType.Admin
+                RoleName = RoleName.Admin
             },
             new RoleEntity
             {
                 Id = Guid.NewGuid(),
-                RoleName = RoleType.User
+                RoleName = RoleName.User
             });
 
         modelBuilder.Entity<UserEntity>()

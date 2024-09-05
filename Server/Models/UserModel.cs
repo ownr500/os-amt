@@ -7,5 +7,5 @@ public record UserModel(
     string FirstName,
     string LastName,
     string Login,
-    List<RoleType> Roles
+    List<RoleName> Roles
     );

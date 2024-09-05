@@ -3,9 +3,9 @@
 namespace API.Controllers.DTO;
 
 public record UserDto(
-    Guid UserId,
+    Guid Id,
     string FirstName,
     string LastName,
     string Login,
-    List<RoleType> Role
+    List<RoleName> Roles
 );

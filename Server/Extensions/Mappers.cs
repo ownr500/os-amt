@@ -63,21 +63,20 @@ public static class Mappers
             );
     }
 
-    public static List<UserDto> ToDto(this List<UserModel> list)
+    public static List<UserDto> ToDtoList(this List<UserModel> list)
     {
-        List<UserDto> userDtos = new List<UserDto>();
-
-        foreach (var model in list)
-        {
-            userDtos.Add(new UserDto(
-                model.UserId,
-                model.FirstName,
-                model.LastName,
-                model.Login,
-                model.Roles
-                ));
-        }
-
+        var userDtos = list.Select(x => x.ToDto()).ToList();
         return userDtos;
+    }
+
+    public static UserDto ToDto(this UserModel model)
+    {
+        return new UserDto(
+            model.UserId,
+            model.FirstName,
+            model.LastName,
+            model.Login,
+            model.Roles
+        );
     }
 }
