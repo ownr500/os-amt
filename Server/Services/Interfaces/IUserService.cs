@@ -15,4 +15,5 @@ public interface IUserService
     Task<List<UserModel>> GetUsers(CancellationToken ct);
     Task<Result> MakeUserAdmin(Guid userId, CancellationToken ct);
     Task<Result> RevokeTokens(Guid userId, CancellationToken ct);
+    Task<Result> UserToAdmin(MakeUserAdminModel model);
 }
