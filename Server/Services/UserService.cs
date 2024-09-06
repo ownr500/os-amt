@@ -115,24 +115,43 @@ public class UserService : IUserService
 
     public async Task<Result> MakeUserAdmin(Guid userId, CancellationToken ct)
     {
-        var user = await _dbContext.Users.Include(x => x.UserRoles)
-            .FirstOrDefaultAsync(x => x.Id == userId, ct);
-        if (user.UserRoles is null) return Result.Fail(MessageConstants.UserHasNoRoles);
-        var adminRoleFound = user.UserRoles.ToList().Any(x => x.Role.RoleName == RoleName.Admin);
-        if (adminRoleFound) return Result.Fail(MessageConstants.UserAlreadyAdmin);
+        var adminRole = await _dbContext.Roles.FirstAsync(x => x.RoleName == RoleName.Admin, ct);
+        var alreadyAdmin =
+            await _dbContext.UserRoles.AnyAsync(x => x.UserId == userId && x.RoleId == adminRole.Id, ct);
+        if(alreadyAdmin) return Result.Fail(MessageConstants.UserAlreadyAdmin);
 
-        var adminRoleEntity = await _dbContext.Roles.FirstOrDefaultAsync(x => x.RoleName == RoleName.Admin, ct);
-        var adminRole = new UserRoleEntity
+        var userRole = new UserRoleEntity
         {
             Id = Guid.NewGuid(),
-            RoleId = adminRoleEntity.Id
+            UserId = userId,
+            RoleId = adminRole.Id
         };
-        user.UserRoles.Add(adminRole);
-        await _dbContext.AddAsync(adminRole, ct);
-        _dbContext.Update(user);
+
+        await _dbContext.UserRoles.AddAsync(userRole, ct);
         await _dbContext.SaveChangesAsync(ct);
-        await RevokeTokens(userId, ct);
+
         return Result.Ok();
+        
+        //
+        //
+        // var user = await _dbContext.Users.Include(x => x.UserRoles)
+        //     .FirstOrDefaultAsync(x => x.Id == userId, ct);
+        // if (user.UserRoles is null) return Result.Fail(MessageConstants.UserHasNoRoles);
+        // var adminRoleFound = user.UserRoles.ToList().Any(x => x.Role.RoleName == RoleName.Admin);
+        // if (adminRoleFound) return Result.Fail(MessageConstants.UserAlreadyAdmin);
+        //
+        // var adminRoleEntity = await _dbContext.Roles.FirstOrDefaultAsync(x => x.RoleName == RoleName.Admin, ct);
+        // var adminRole = new UserRoleEntity
+        // {
+        //     Id = Guid.NewGuid(),
+        //     RoleId = adminRoleEntity.Id
+        // };
+        // user.UserRoles.Add(adminRole);
+        // await _dbContext.AddAsync(adminRole, ct);
+        // _dbContext.Update(user);
+        // await _dbContext.SaveChangesAsync(ct);
+        // await RevokeTokens(userId, ct);
+        // return Result.Ok();
     }
 
     public async Task<Result> RevokeTokens(Guid userId, CancellationToken ct)

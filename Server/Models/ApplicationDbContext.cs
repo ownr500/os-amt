@@ -9,6 +9,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserEntity> Users { get; set; } = default!;
     public DbSet<TokenEntity> Tokens { get; set; } = default!;
     public DbSet<RoleEntity> Roles { get; set; }
+    public DbSet<UserRoleEntity> UserRoles { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options) {}
