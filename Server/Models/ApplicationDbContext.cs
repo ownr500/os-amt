@@ -1,4 +1,5 @@
-﻿using API.Models.Entities;
+﻿using API.Constants;
+using API.Models.Entities;
 using API.Models.enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,12 +25,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<RoleEntity>().HasData(
             new RoleEntity
             {
-                Id = Guid.NewGuid(),
+                Id = RoleConstants.AdminGuid,
                 RoleName = RoleName.Admin
             },
             new RoleEntity
             {
-                Id = Guid.NewGuid(),
+                Id = RoleConstants.UserGuid,
                 RoleName = RoleName.User
             });
 
