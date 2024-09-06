@@ -170,11 +170,10 @@ public class UserService : IUserService
         var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == model.Login.ToLower());
         if (user is null) return Result.Fail(MessageConstants.UserNotFound);
         
-        var adminRoleEntity = await _dbContext.Roles.FirstOrDefaultAsync(x => x.RoleName == RoleName.Admin);
         var adminRole = new UserRoleEntity
         {
             Id = Guid.NewGuid(),
-            RoleId = adminRoleEntity.Id
+            RoleId = RoleConstants.AdminGuid
         };
         user.UserRoles.Add(adminRole);
         await _dbContext.AddAsync(adminRole);
