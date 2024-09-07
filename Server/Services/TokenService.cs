@@ -29,17 +29,15 @@ public class TokenService : ITokenService
         _contextAccessor = contextAccessor;
     }
 
-    public string GenerateAccessToken(Guid userId, List<UserRoleEntity> roles)
+    public string GenerateAccessToken(Guid userId, List<RoleName> roles)
     {
-        var adminRoleFound = roles.FirstOrDefault(x => x.Role.RoleName == RoleName.Admin);
-
-        var role = adminRoleFound is null ? RoleName.User.ToString() : RoleName.Admin.ToString();
-        
+        var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x.ToString()));
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, userId.ToString()),
-            new(ClaimTypes.Role, role)
+            new(ClaimTypes.NameIdentifier, userId.ToString())
         };
+
+        claims.AddRange(roleClaims);
 
         var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
@@ -54,17 +52,13 @@ public class TokenService : ITokenService
         return _tokenHandler.WriteToken(options);
     }
 
-    public string GenerateRefreshToken(Guid userId, List<UserRoleEntity> roles, out DateTimeOffset expirationDate)
+    public string GenerateRefreshToken(Guid userId, out DateTimeOffset expirationDate)
     {
         expirationDate = DateTime.UtcNow.AddDays(1);
-        
-        var adminRoleFound = roles.FirstOrDefault(x => x.Role.RoleName == RoleName.Admin);
-        var role = adminRoleFound is null ? RoleName.User.ToString() : RoleName.Admin.ToString();
-        
+
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, userId.ToString()),
-            new(ClaimTypes.Role, role)
+            new(ClaimTypes.NameIdentifier, userId.ToString())
         };
         var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
@@ -81,12 +75,25 @@ public class TokenService : ITokenService
 
     public async Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
-        var tokenEntity = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.RefreshToken == token, cancellationToken: ct);
-        if (tokenEntity is not null && tokenEntity.IsActive && tokenEntity.RefreshTokenExpireAt > DateTimeOffset.UtcNow)
+        // var tokenEntity = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.RefreshToken == token, cancellationToken: ct);
+        var model = await _dbContext.Tokens
+            .Where(x => x.RefreshToken == token && x.IsActive && x.RefreshTokenExpireAt > DateTimeOffset.UtcNow)
+            .Select(x =>
+                new
+                {
+                    userId = x.User.Id,
+                    token = x,
+                    roles = x.User.UserRoles
+                        .Select(u => u.Role.RoleName)
+                        .ToList()
+                }
+            )
+            .FirstOrDefaultAsync(ct);
+        if (model is not null)
         {
-            tokenEntity.IsActive = false;
-            var tokenModel = await GenerateNewTokenModelAsync(tokenEntity.UserId, ct);
-            _dbContext.Tokens.Update(tokenEntity);
+            model.token.IsActive = false;
+            var tokenModel = await GenerateNewTokenModelAsync(model.userId, model.roles, ct);
+            _dbContext.Tokens.Update(model.token);
             await _dbContext.SaveChangesAsync(ct);
             return Result.Ok(tokenModel);
         }
@@ -108,14 +115,12 @@ public class TokenService : ITokenService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, CancellationToken ct)
+    public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleName> roles, CancellationToken ct)
     {
-        var user = await _dbContext.Users.Include(x => x.UserRoles).FirstOrDefaultAsync(x => x.Id == userId, ct);
-        
-        var accessToken = GenerateAccessToken(userId, user.UserRoles.ToList());
-        var refreshToken = GenerateRefreshToken(userId, user.UserRoles.ToList(), out var expirationDate);
+        var accessToken = GenerateAccessToken(userId, roles);
+        var refreshToken = GenerateRefreshToken(userId, out var expirationDate);
 
-        var token =  new TokenEntity
+        var token = new TokenEntity
         {
             Id = Guid.NewGuid(),
             AccessToken = accessToken,
@@ -125,7 +130,7 @@ public class TokenService : ITokenService
             IsActive = true,
             CreatedAt = DateTimeOffset.UtcNow
         };
-        
+
         await _dbContext.AddAsync(token, ct);
         await _dbContext.SaveChangesAsync(ct);
 
@@ -140,7 +145,7 @@ public class TokenService : ITokenService
             var token = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.AccessToken == headerArray[1]);
             if (token is not null && token.IsActive) return true;
         }
-        
+
         return false;
     }
 }
