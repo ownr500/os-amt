@@ -168,6 +168,11 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
+    public Task<Result> AddRoleAsync(string userId, string role)
+    {
+        throw new NotImplementedException();
+    }
+
     private static string GeneratePasswordHash(string password)
     {
         using var sha256 = SHA256.Create();

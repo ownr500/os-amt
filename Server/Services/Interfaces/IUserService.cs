@@ -16,4 +16,5 @@ public interface IUserService
     Task<Result> MakeUserAdmin(Guid userId, CancellationToken ct);
     Task<Result> RevokeTokens(Guid userId, CancellationToken ct);
     Task<Result> UserToAdmin(MakeUserAdminModel model);
+    Task<Result> AddRoleAsync(string userId, string role);
 }
