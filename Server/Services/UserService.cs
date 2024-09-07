@@ -92,13 +92,22 @@ public class UserService : IUserService
 
     public async Task<Result<SinginReponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct)
     {
-        var user = await GetUserByLoginAsync(requestModel.Login, ct);
-        if (user is null) return Result.Fail(MessageConstants.UserNotFound);
+        var passwordHash = GeneratePasswordHash(requestModel.Password);
 
-        var passwordMatch = user.PasswordHash == GeneratePasswordHash(requestModel.Password);
-        if (!passwordMatch) return Result.Fail(MessageConstants.InvalidCredentials);
+        var model = await _dbContext.Users
+            .Where(x => x.LoginNormalized == requestModel.Login.ToLower()
+                        && x.PasswordHash == passwordHash
+            )
+            .Select(x => new
+            {
+                userId = x.Id,
+                userRoles = x.UserRoles.Select(u => u.Role.RoleName).ToList()
+            })
+            .FirstOrDefaultAsync(ct);
         
-        var tokenModel = await _tokenService.GenerateNewTokenModelAsync(user.Id, ct);
+        if (model is null) return Result.Fail(MessageConstants.InvalidCredentials);
+
+        var tokenModel = await _tokenService.GenerateNewTokenModelAsync(model.userId, model.userRoles, ct);
         
         return Result.Ok(new SinginReponseModel(
             tokenModel.AccessToken,
@@ -131,36 +140,13 @@ public class UserService : IUserService
         await _dbContext.SaveChangesAsync(ct);
 
         return Result.Ok();
-        
-        //
-        //
-        // var user = await _dbContext.Users.Include(x => x.UserRoles)
-        //     .FirstOrDefaultAsync(x => x.Id == userId, ct);
-        // if (user.UserRoles is null) return Result.Fail(MessageConstants.UserHasNoRoles);
-        // var adminRoleFound = user.UserRoles.ToList().Any(x => x.Role.RoleName == RoleName.Admin);
-        // if (adminRoleFound) return Result.Fail(MessageConstants.UserAlreadyAdmin);
-        //
-        // var adminRoleEntity = await _dbContext.Roles.FirstOrDefaultAsync(x => x.RoleName == RoleName.Admin, ct);
-        // var adminRole = new UserRoleEntity
-        // {
-        //     Id = Guid.NewGuid(),
-        //     RoleId = adminRoleEntity.Id
-        // };
-        // user.UserRoles.Add(adminRole);
-        // await _dbContext.AddAsync(adminRole, ct);
-        // _dbContext.Update(user);
-        // await _dbContext.SaveChangesAsync(ct);
-        // await RevokeTokens(userId, ct);
-        // return Result.Ok();
     }
 
     public async Task<Result> RevokeTokens(Guid userId, CancellationToken ct)
     {
-        List<TokenEntity> tokens = _dbContext.Tokens.Where(x => x.UserId == userId && x.IsActive == true).ToList();
-        if (tokens is null) return Result.Fail(MessageConstants.NoActiveTokens);
-        tokens.ForEach(x => x.IsActive = false);
-        _dbContext.Update(tokens);
-        await _dbContext.SaveChangesAsync(ct);
+        await _dbContext.Tokens
+            .Where(x => x.UserId == userId && x.IsActive == true)
+            .ExecuteUpdateAsync(x => x.SetProperty(entity => entity.IsActive, false), ct);
         return Result.Ok();
     }
 
