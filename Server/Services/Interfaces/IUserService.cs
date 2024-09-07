@@ -1,4 +1,5 @@
 ﻿using API.Models;
+using API.Models.enums;
 using API.Models.Request;
 using API.Models.Response;
 using FluentResults;
@@ -16,5 +17,5 @@ public interface IUserService
     Task<Result> MakeUserAdmin(Guid userId, CancellationToken ct);
     Task<Result> RevokeTokens(Guid userId, CancellationToken ct);
     Task<Result> UserToAdmin(MakeUserAdminModel model);
-    Task<Result> AddRoleAsync(string userId, string role);
+    Task<Result> AddRoleAsync(Guid userId, RoleName role);
 }

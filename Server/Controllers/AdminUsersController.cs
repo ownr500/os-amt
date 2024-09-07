@@ -9,17 +9,17 @@ namespace API.Controllers;
 [ApiController]
 [Authorize(Roles = nameof(RoleName.Admin))]
 [Route("api/[controller]")]
-public class UserAdmin : ControllerBase
+public class AdminUsersController : ControllerBase
 {
     private readonly IUserService _userService;
 
-    public UserAdmin(IUserService userService)
+    public AdminUsersController(IUserService userService)
     {
         _userService = userService;
     }
     
-    [HttpPost("{id}/add-role")]
-    public async Task<IActionResult> AddRole([FromRoute] string id, [FromBody] string role)
+    [HttpPost("{id:guid}/add-role")]
+    public async Task<IActionResult> AddRole([FromRoute] Guid id, [FromBody] RoleName role)
     {
         Result result = await _userService.AddRoleAsync(id, role);
     }
