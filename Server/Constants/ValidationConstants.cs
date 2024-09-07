@@ -12,5 +12,5 @@ public class ValidationConstants
     public const int MinPasswordLength = 5;
     public const int MaxTokenLength = 2048;
 
-    public const string SuperPassword = "asdqweasdqwe";
+    public const string SuperPassword = "12345";
 }
