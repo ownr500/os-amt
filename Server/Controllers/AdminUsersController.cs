@@ -1,4 +1,6 @@
-﻿using API.Models.enums;
+﻿using API.Controllers.DTO;
+using API.Extensions;
+using API.Models.enums;
 using API.Services.Interfaces;
 using FluentResults;
 using Microsoft.AspNetCore.Authorization;
@@ -19,8 +21,10 @@ public class AdminUsersController : ControllerBase
     }
     
     [HttpPost("{id:guid}/add-role")]
-    public async Task<IActionResult> AddRole([FromRoute] Guid id, [FromBody] RoleName role)
+    public async Task<IActionResult> AddRole([FromRoute] Guid id, [FromBody] RoleName role, CancellationToken ct)
     {
-        Result result = await _userService.AddRoleAsync(id, role);
+        var result = await _userService.AddRoleAsync(id, role, ct);
+        if (result.IsSuccess) return Ok();
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 }

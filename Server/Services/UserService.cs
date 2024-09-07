@@ -168,10 +168,22 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public Task<Result> AddRoleAsync(Guid userId, RoleName role)
+    public async Task<Result> AddRoleAsync(Guid userId, RoleName role, CancellationToken ct)
     {
-        
-        throw new NotImplementedException();
+        var roleEntity = await _dbContext.Roles.FirstAsync(x => x.RoleName == role, ct);
+        var roleExists = await _dbContext.UserRoles
+            .AnyAsync(x => x.UserId == userId && x.RoleId == roleEntity.Id, ct);
+        if (roleExists) return Result.Fail(MessageConstants.UserAlreadyHasRole);
+        var userRole = new UserRoleEntity
+        {
+            Id = Guid.NewGuid(),
+            RoleId = roleEntity.Id,
+            UserId = userId
+        };
+
+        await _dbContext.UserRoles.AddAsync(userRole, ct);
+        await _dbContext.SaveChangesAsync(ct);
+        return Result.Ok();
     }
 
     private static string GeneratePasswordHash(string password)
