@@ -27,6 +27,6 @@ public class UserEntity
     [MaxLength(ValidationConstants.MaxPasswordHashLength)]
     public string PasswordHash { get; set; } = string.Empty;
 
-    public ICollection<TokenEntity> Tokens { get; set; } = new List<TokenEntity>();
-    public ICollection<UserRoleEntity> UserRoles { get; set; } = new List<UserRoleEntity>();
+    public virtual ICollection<TokenEntity> Tokens { get; set; } = new List<TokenEntity>();
+    public virtual ICollection<UserRoleEntity> UserRoles { get; set; } = new List<UserRoleEntity>();
 }

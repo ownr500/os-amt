@@ -10,5 +10,5 @@ public class RoleEntity
     
     public RoleName RoleName { get; set; }
     
-    public ICollection<UserRoleEntity> UserRoles { get; set; }
+    public virtual ICollection<UserRoleEntity> UserRoles { get; set; }
 }

@@ -8,8 +8,8 @@ public class UserRoleEntity
     public Guid Id { get; set; }
     
     public Guid UserId { get; set; }
-    public UserEntity User { get; set; }
+    public virtual UserEntity User { get; set; }
     
     public Guid RoleId { get; set; }
-    public RoleEntity Role { get; set; }
+    public virtual RoleEntity Role { get; set; }
 }
