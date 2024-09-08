@@ -150,24 +150,6 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result> UserToAdmin(MakeUserAdminModel model)
-    {
-        if(!string.Equals(model.SuperAdminPassword, ValidationConstants.SuperPassword)) return Result.Fail(MessageConstants.WrongPassword);
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == model.Login.ToLower());
-        if (user is null) return Result.Fail(MessageConstants.UserNotFound);
-        
-        var adminRole = new UserRoleEntity
-        {
-            Id = Guid.NewGuid(),
-            RoleId = RoleConstants.AdminGuid
-        };
-        user.UserRoles.Add(adminRole);
-        await _dbContext.AddAsync(adminRole);
-        _dbContext.Update(user);
-        await _dbContext.SaveChangesAsync();
-        return Result.Ok();
-    }
-
     public async Task<Result> AddRoleAsync(Guid userId, RoleName role, CancellationToken ct)
     {
         var roleId = RoleConstants.RoleNameToGuid[role];
