@@ -170,14 +170,14 @@ public class UserService : IUserService
 
     public async Task<Result> AddRoleAsync(Guid userId, RoleName role, CancellationToken ct)
     {
-        var roleEntity = await _dbContext.Roles.FirstAsync(x => x.RoleName == role, ct);
+        var roleId = RoleConstants.RoleNameToGuid[role];
         var roleExists = await _dbContext.UserRoles
-            .AnyAsync(x => x.UserId == userId && x.RoleId == roleEntity.Id, ct);
+            .AnyAsync(x => x.UserId == userId && x.RoleId == roleId, ct);
         if (roleExists) return Result.Fail(MessageConstants.UserAlreadyHasRole);
         var userRole = new UserRoleEntity
         {
             Id = Guid.NewGuid(),
-            RoleId = roleEntity.Id,
+            RoleId = roleId,
             UserId = userId
         };
 
