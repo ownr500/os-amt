@@ -18,7 +18,7 @@ public class TokenEntity
     [MaxLength(ValidationConstants.MaxTokenLength)]
     public string RefreshToken { get; set; } = string.Empty;
     
-    public bool IsActive { get; set; }
+    public bool RefreshTokenActive { get; set; }
     
     public DateTimeOffset RefreshTokenExpireAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
