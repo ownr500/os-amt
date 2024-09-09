@@ -16,4 +16,5 @@ public class MessageConstants
     public const string UserAlreadyAdmin = "User already admin";
     public const string NoActiveTokens = "User has no active authorizations";
     public const string UserAlreadyHasRole = "User already has role";
+    public const string UserHasNoRole = "User doesn't have role";
 }

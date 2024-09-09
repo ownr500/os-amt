@@ -185,13 +185,15 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public Task<Result> RemoveRoleAsync(Guid id, RoleName role, CancellationToken ct)
+    public async Task<Result> RemoveRoleAsync(Guid userId, RoleName role, CancellationToken ct)
     {
-        /*
-         * 1) check role
-         * 2) remove role
-         * 3) revoke tokens
-         */
+        var roleId = RoleConstants.RoleNameToGuid[role]
+        var roleExists = await _dbContext.UserRoles
+            .AnyAsync(x => x.UserId == userId && x.RoleId == roleId, ct);
+        if (!roleExists) return Result.Fail(MessageConstants.UserHasNoRole);
+        // _dbContext.UserRoles.
+        
+        
         
         throw new NotImplementedException();
     }
