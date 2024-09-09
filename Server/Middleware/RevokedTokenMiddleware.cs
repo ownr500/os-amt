@@ -17,7 +17,7 @@ internal sealed class RevokedTokenMiddleware : IMiddleware
         if (context.Request.Headers
             .TryGetValue(HeaderNames.Authorization, out var header))
         {
-            var result = await _tokenService.CheckActiveToken(header);
+            var result = await _tokenService.CheckRevokedToken(header);
             if (!result)
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;

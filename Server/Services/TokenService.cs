@@ -148,4 +148,16 @@ public class TokenService : ITokenService
 
         return false;
     }
+
+    public async Task<bool> CheckRevokedToken(StringValues header)
+    {
+        var headerArray = header.ToString().Split(' ');
+        if (headerArray.Length == 2)
+        {
+            var tokenRevoked = await _dbContext.RevokedTokens.AnyAsync(x => x.AccessToken == headerArray[1]);
+            if (tokenRevoked) return false;
+        }
+
+        return true;
+    }
 }
