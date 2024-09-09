@@ -144,9 +144,26 @@ public class UserService : IUserService
 
     public async Task<Result> RevokeTokens(Guid userId, CancellationToken ct)
     {
-        await _dbContext.Tokens
-            .Where(x => x.UserId == userId && x.IsActive == true)
-            .ExecuteUpdateAsync(x => x.SetProperty(entity => entity.IsActive, false), ct);
+        var tokens = await _dbContext.Tokens.Where(x => x.UserId == userId && x.IsActive == true).ToListAsync(ct);
+
+        var revokedList = new List<RevokedTokenEntity>();
+        foreach (var token in tokens)
+        {
+            var revoked = new RevokedTokenEntity
+            {
+                Id = Guid.NewGuid(),
+                AccessToken = token.AccessToken,
+                RefreshToken = token.RefreshToken,
+                RefreshTokenExpireAt = token.RefreshTokenExpireAt
+            };
+            revokedList.Add(revoked);
+            token.IsActive = false;
+        }
+        
+        _dbContext.Tokens.UpdateRange(tokens);
+        _dbContext.RevokedTokens.AddRange(revokedList);
+
+        await _dbContext.SaveChangesAsync(ct);
         return Result.Ok();
     }
 
@@ -170,6 +187,11 @@ public class UserService : IUserService
 
     public Task<Result> RemoveRoleAsync(Guid id, RoleName role, CancellationToken ct)
     {
+        /*
+         * 1) check role
+         * 2) remove role
+         * 3) revoke tokens
+         */
         
         throw new NotImplementedException();
     }
