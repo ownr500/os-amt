@@ -26,4 +26,12 @@ public class TokensController : ControllerBase
         if (result.IsSuccess) return new SinginResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
+
+    [HttpPost("revoke")]
+    public async Task<IActionResult> Revoke(CancellationToken ct)
+    {
+        var result = await _tokenService.RevokeTokens(null, ct);
+        if (result.IsSuccess) return Ok();
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
+    }
 }
