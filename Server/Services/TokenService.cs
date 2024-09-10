@@ -168,19 +168,22 @@ public class TokenService : ITokenService
         
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
+        var guid1 = Guid.NewGuid();
+        var guid2 = Guid.NewGuid();
+        
         var revokedTokensCombined = await _dbContext.Tokens
             .Where(x => x.UserId == userId && x.RefreshTokenActive)
             .Select(x => new CombinedTokenModel
                 {
                     Entity1 = new RevokedTokenEntity
                     {
-                        Id = Guid.NewGuid(),
+                        Id = guid1,
                         Token = x.AccessToken,
                         TokenExpireAt = x.AccessTokenExpireAt
                     },
                     Entity2 = new RevokedTokenEntity
                     {
-                        Id = Guid.NewGuid(),
+                        Id = guid2,
                         Token = x.RefreshToken,
                         TokenExpireAt = x.RefreshTokenExpireAt
                     }
