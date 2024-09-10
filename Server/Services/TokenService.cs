@@ -29,8 +29,9 @@ public class TokenService : ITokenService
         _contextAccessor = contextAccessor;
     }
 
-    public string GenerateAccessToken(Guid userId, List<RoleName> roles)
+    public string GenerateAccessToken(Guid userId, List<RoleName> roles, out DateTimeOffset expirationDate)
     {
+        expirationDate = DateTime.Now.AddHours(1);
         var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x.ToString()));
         var claims = new List<Claim>
         {
@@ -45,7 +46,7 @@ public class TokenService : ITokenService
             "localhost",
             "API Key",
             claims: claims,
-            expires: DateTime.Now.AddHours(1),
+            expires: expirationDate.UtcDateTime,
             signingCredentials: credentials
         );
 
@@ -77,7 +78,7 @@ public class TokenService : ITokenService
     {
         // var tokenEntity = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.RefreshToken == token, cancellationToken: ct);
         var model = await _dbContext.Tokens
-            .Where(x => x.RefreshToken == token && x.IsActive && x.RefreshTokenExpireAt > DateTimeOffset.UtcNow)
+            .Where(x => x.RefreshToken == token && x.RefreshTokenActive && x.RefreshTokenExpireAt > DateTimeOffset.UtcNow)
             .Select(x =>
                 new
                 {
@@ -91,7 +92,7 @@ public class TokenService : ITokenService
             .FirstOrDefaultAsync(ct);
         if (model is not null)
         {
-            model.token.IsActive = false;
+            model.token.RefreshTokenActive = false;
             var tokenModel = await GenerateNewTokenModelAsync(model.userId, model.roles, ct);
             _dbContext.Tokens.Update(model.token);
             await _dbContext.SaveChangesAsync(ct);
@@ -117,8 +118,8 @@ public class TokenService : ITokenService
 
     public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleName> roles, CancellationToken ct)
     {
-        var accessToken = GenerateAccessToken(userId, roles);
-        var refreshToken = GenerateRefreshToken(userId, out var expirationDate);
+        var accessToken = GenerateAccessToken(userId, roles, out var accessTokenExpireAt);
+        var refreshToken = GenerateRefreshToken(userId, out var refreshTokenExpireAt);
 
         var token = new TokenEntity
         {
@@ -126,8 +127,9 @@ public class TokenService : ITokenService
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             UserId = userId,
-            RefreshTokenExpireAt = expirationDate,
-            IsActive = true,
+            AccessTokenExpireAt = accessTokenExpireAt,
+            RefreshTokenExpireAt = refreshTokenExpireAt,
+            RefreshTokenActive = true,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -143,9 +145,8 @@ public class TokenService : ITokenService
         if (headerArray.Length == 2)
         {
             var token = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.AccessToken == headerArray[1]);
-            if (token is not null && token.IsActive) return true;
+            if (token is not null && token.RefreshTokenActive) return true;
         }
-
         return false;
     }
 
@@ -154,7 +155,7 @@ public class TokenService : ITokenService
         var headerArray = header.ToString().Split(' ');
         if (headerArray.Length == 2)
         {
-            var tokenRevoked = await _dbContext.RevokedTokens.AnyAsync(x => x.AccessToken == headerArray[1]);
+            var tokenRevoked = await _dbContext.RevokedTokens.AnyAsync(x => x.Token == headerArray[1]);
             if (tokenRevoked) return false;
         }
 
