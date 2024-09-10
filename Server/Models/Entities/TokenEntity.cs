@@ -20,6 +20,8 @@ public class TokenEntity
     
     public bool RefreshTokenActive { get; set; }
     
+    public DateTimeOffset AccessTokenExpireAt { get; set; }
+    
     public DateTimeOffset RefreshTokenExpireAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
