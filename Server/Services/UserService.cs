@@ -140,47 +140,7 @@ public class UserService : IUserService
 
         return Result.Ok();
     }
-
-    public async Task<Result> RevokeTokens(Guid userId, CancellationToken ct)
-    {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
-
-        var revokedTokensCombined = await _dbContext.Tokens
-            .Where(x => x.UserId == userId && x.RefreshTokenActive)
-            .Select(x => new CombinedTokenModel
-                {
-                    Entity1 = new RevokedTokenEntity
-                    {
-                        Id = Guid.NewGuid(),
-                        Token = x.AccessToken,
-                        TokenExpireAt = x.AccessTokenExpireAt
-                    },
-                    Entity2 = new RevokedTokenEntity
-                    {
-                        Id = Guid.NewGuid(),
-                        Token = x.RefreshToken,
-                        TokenExpireAt = x.RefreshTokenExpireAt
-                    }
-                }
-            )
-            .ToListAsync(ct);
-
-        var revokedTokensToAdd = revokedTokensCombined
-            .SelectMany(x => new[]
-            {
-                x.Entity1,
-                x.Entity2
-            }).ToList();
-        _dbContext.RevokedTokens.AddRange(revokedTokensToAdd);
-        await _dbContext.Tokens
-            .Where(x => x.UserId == userId && x.RefreshTokenActive)
-            .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
-
-        await _dbContext.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
-        return Result.Ok();
-    }
-
+    
     public async Task<Result> AddRoleAsync(Guid userId, RoleName role, CancellationToken ct)
     {
         var roleId = RoleConstants.RoleNameToGuid[role];
