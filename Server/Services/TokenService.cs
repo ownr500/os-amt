@@ -162,7 +162,7 @@ public class TokenService : ITokenService
         return true;
     }
     
-    public async Task<Result> RevokeTokens(Guid? userId, CancellationToken ct)
+    public async Task<Result> RevokeTokens(Guid? nullableUserId, CancellationToken ct)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
@@ -200,5 +200,19 @@ public class TokenService : ITokenService
         await _dbContext.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
         return Result.Ok();
+    }
+    
+    private Guid GetUserIdFromContext()
+    {
+        var nameIdentifier = _contextAccessor.HttpContext?.User.Claims
+            .FirstOrDefault(
+                x => string.Equals(x.Type, ClaimTypes.NameIdentifier,
+                    StringComparison.InvariantCultureIgnoreCase))?.Value;
+        if (!Guid.TryParse(nameIdentifier, out var userId))
+        {
+            throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
+        }
+
+        return userId;
     }
 }
