@@ -164,6 +164,8 @@ public class TokenService : ITokenService
     
     public async Task<Result> RevokeTokens(Guid? nullableUserId, CancellationToken ct)
     {
+        var userId = nullableUserId ?? GetUserIdFromContext();
+        
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
         var revokedTokensCombined = await _dbContext.Tokens
