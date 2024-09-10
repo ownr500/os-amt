@@ -11,5 +11,5 @@ public interface ITokenService
     Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleName> roles, CancellationToken ct);
     Task<bool> CheckActiveToken(StringValues header);
     Task<bool> CheckRevokedToken(StringValues header);
-    Task<Result> RevokeTokens(Guid? userId, CancellationToken ct)
+    Task<Result> RevokeTokens(Guid? userId, CancellationToken ct);
 }
