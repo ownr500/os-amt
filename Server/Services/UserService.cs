@@ -104,16 +104,15 @@ public class UserService : IUserService
                 userRoles = x.UserRoles.Select(u => u.Role.RoleName).ToList()
             })
             .FirstOrDefaultAsync(ct);
-        
+
         if (model is null) return Result.Fail(MessageConstants.InvalidCredentials);
 
         var tokenModel = await _tokenService.GenerateNewTokenModelAsync(model.userId, model.userRoles, ct);
-        
+
         return Result.Ok(new SinginReponseModel(
             tokenModel.AccessToken,
             tokenModel.RefreshToken
         ));
-
     }
 
     public async Task<List<UserModel>> GetUsers(CancellationToken ct)
@@ -127,7 +126,7 @@ public class UserService : IUserService
         var adminRole = await _dbContext.Roles.FirstAsync(x => x.RoleName == RoleName.Admin, ct);
         var alreadyAdmin =
             await _dbContext.UserRoles.AnyAsync(x => x.UserId == userId && x.RoleId == adminRole.Id, ct);
-        if(alreadyAdmin) return Result.Fail(MessageConstants.UserAlreadyAdmin);
+        if (alreadyAdmin) return Result.Fail(MessageConstants.UserAlreadyAdmin);
 
         var userRole = new UserRoleEntity
         {
@@ -144,26 +143,41 @@ public class UserService : IUserService
 
     public async Task<Result> RevokeTokens(Guid userId, CancellationToken ct)
     {
-        var tokens = await _dbContext.Tokens.Where(x => x.UserId == userId && x.IsActive == true).ToListAsync(ct);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
-        var revokedList = new List<RevokedTokenEntity>();
-        foreach (var token in tokens)
-        {
-            var revoked = new RevokedTokenEntity
+        var revokedTokensCombined = await _dbContext.Tokens
+            .Where(x => x.UserId == userId && x.RefreshTokenActive)
+            .Select(x => new CombinedTokenModel
+                {
+                    Entity1 = new RevokedTokenEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        Token = x.AccessToken,
+                        TokenExpireAt = x.AccessTokenExpireAt
+                    },
+                    Entity2 = new RevokedTokenEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        Token = x.RefreshToken,
+                        TokenExpireAt = x.RefreshTokenExpireAt
+                    }
+                }
+            )
+            .ToListAsync(ct);
+
+        var revokedTokensToAdd = revokedTokensCombined
+            .SelectMany(x => new[]
             {
-                Id = Guid.NewGuid(),
-                AccessToken = token.AccessToken,
-                RefreshToken = token.RefreshToken,
-                RefreshTokenExpireAt = token.RefreshTokenExpireAt
-            };
-            revokedList.Add(revoked);
-            token.IsActive = false;
-        }
-        
-        _dbContext.Tokens.UpdateRange(tokens);
-        _dbContext.RevokedTokens.AddRange(revokedList);
+                x.Entity1,
+                x.Entity2
+            }).ToList();
+        _dbContext.RevokedTokens.AddRange(revokedTokensToAdd);
+        await _dbContext.Tokens
+            .Where(x => x.UserId == userId && x.RefreshTokenActive)
+            .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
 
         await _dbContext.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return Result.Ok();
     }
 
@@ -187,14 +201,13 @@ public class UserService : IUserService
 
     public async Task<Result> RemoveRoleAsync(Guid userId, RoleName role, CancellationToken ct)
     {
-        var roleId = RoleConstants.RoleNameToGuid[role]
+        var roleId = RoleConstants.RoleNameToGuid[role];
         var roleExists = await _dbContext.UserRoles
             .AnyAsync(x => x.UserId == userId && x.RoleId == roleId, ct);
         if (!roleExists) return Result.Fail(MessageConstants.UserHasNoRole);
         // _dbContext.UserRoles.
-        
-        
-        
+
+
         throw new NotImplementedException();
     }
 
