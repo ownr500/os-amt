@@ -59,7 +59,7 @@ public static class Mappers
            user.FirstName,
            user.LastName,
            user.Login,
-           user.UserRoles.Select(x => x.Role.RoleNames).ToList()
+           user.UserRoles.Select(x => x.Role.RoleName).ToList()
             );
     }
 

@@ -101,7 +101,7 @@ public class UserService : IUserService
             .Select(x => new
             {
                 userId = x.Id,
-                userRoles = x.UserRoles.Select(u => u.Role.RoleNames).ToList()
+                userRoles = x.UserRoles.Select(u => u.Role.RoleName).ToList()
             })
             .FirstOrDefaultAsync(ct);
 

@@ -27,12 +27,12 @@ public class ApplicationDbContext : DbContext
             new RoleEntity
             {
                 Id = RoleConstants.AdminRoleId,
-                RoleNames = RoleNames.Admin
+                RoleName = RoleNames.Admin
             },
             new RoleEntity
             {
                 Id = RoleConstants.UserRoleId,
-                RoleNames = RoleNames.User
+                RoleName = RoleNames.User
             });
 
         modelBuilder.Entity<UserEntity>()

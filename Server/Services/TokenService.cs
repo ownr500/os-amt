@@ -84,7 +84,7 @@ public class TokenService : ITokenService
                     userId = x.User.Id,
                     token = x,
                     roles = x.User.UserRoles
-                        .Select(u => u.Role.RoleNames)
+                        .Select(u => u.Role.RoleName)
                         .ToList()
                 }
             )
