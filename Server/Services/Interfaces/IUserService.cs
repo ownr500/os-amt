@@ -17,4 +17,5 @@ public interface IUserService
     Task<Result> MakeUserAdmin(Guid userId, CancellationToken ct);
     Task<Result> AddRoleAsync(Guid userId, RoleName role, CancellationToken ct);
     Task<Result> RemoveRoleAsync(Guid userId, RoleName role, CancellationToken ct);
+    Guid GetUserIdFromContext();
 }

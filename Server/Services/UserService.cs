@@ -190,7 +190,7 @@ public class UserService : IUserService
         return await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == login.ToLower(), ct);
     }
 
-    private Guid GetUserIdFromContext()
+    public Guid GetUserIdFromContext()
     {
         var nameIdentifier = _contextAccessor.HttpContext?.User.Claims
             .FirstOrDefault(

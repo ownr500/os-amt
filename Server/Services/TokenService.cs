@@ -19,6 +19,7 @@ public class TokenService : ITokenService
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly ApplicationDbContext _dbContext;
     private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IUserService _userService;
     private const string SecretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
 
     public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext,
@@ -31,7 +32,7 @@ public class TokenService : ITokenService
 
     public string GenerateAccessToken(Guid userId, List<RoleName> roles, out DateTimeOffset expirationDate)
     {
-        expirationDate = DateTime.Now.AddHours(1);
+        expirationDate = DateTimeOffset.UtcNow.AddHours(1);
         var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x.ToString()));
         var claims = new List<Claim>
         {
@@ -55,7 +56,7 @@ public class TokenService : ITokenService
 
     public string GenerateRefreshToken(Guid userId, out DateTimeOffset expirationDate)
     {
-        expirationDate = DateTime.UtcNow.AddDays(1);
+        expirationDate = DateTimeOffset.UtcNow.AddDays(1);
 
         var claims = new List<Claim>
         {
@@ -162,56 +163,39 @@ public class TokenService : ITokenService
         return true;
     }
     
-    public async Task<Result> RevokeTokens(Guid? nullableUserId, CancellationToken ct)
+    public async Task<Result> RevokeTokens(Guid userId, CancellationToken ct)
     {
-        var userId = nullableUserId ?? GetUserIdFromContext();
-        
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
-
-        var guid1 = Guid.NewGuid();
-        var guid2 = Guid.NewGuid();
-        
         var revokedTokens = await _dbContext.Tokens
             .Where(x => x.UserId == userId && x.RefreshTokenActive)
-            .SelectMany(x => new []
+            .Select(x => new RevokedTokenEntity[]
                 {
                     new RevokedTokenEntity
                     {
-                        Id = guid1,
                         Token = x.AccessToken,
                         TokenExpireAt = x.AccessTokenExpireAt
                     },
                     new RevokedTokenEntity
                     {
-                        Id = guid2,
                         Token = x.RefreshToken,
                         TokenExpireAt = x.RefreshTokenExpireAt
                     }
                 }
             )
-            .ToListAsync(ct);        
-        
-        _dbContext.RevokedTokens.AddRange(revokedTokens);
-        await _dbContext.Tokens
-            .Where(x => x.UserId == userId && x.RefreshTokenActive)
-            .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
+            .ToListAsync(ct);
 
-        await _dbContext.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
-        return Result.Ok();
-    }
-    
-    private Guid GetUserIdFromContext()
-    {
-        var nameIdentifier = _contextAccessor.HttpContext?.User.Claims
-            .FirstOrDefault(
-                x => string.Equals(x.Type, ClaimTypes.NameIdentifier,
-                    StringComparison.InvariantCultureIgnoreCase))?.Value;
-        if (!Guid.TryParse(nameIdentifier, out var userId))
+        if (revokedTokens.Count > 0)
         {
-            throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
-        }
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
-        return userId;
+            _dbContext.RevokedTokens.AddRange(revokedTokens
+                .SelectMany(x => x));
+            await _dbContext.Tokens
+                .Where(x => x.UserId == userId && x.RefreshTokenActive)
+                .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
+
+            await _dbContext.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        return Result.Ok();
     }
 }
