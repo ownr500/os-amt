@@ -1,6 +1,6 @@
 ﻿namespace API.Constants;
 
-public class ValidationConstants
+public static class ValidationConstants
 {
     public const int MinAge = 20;
     public const int MaxLengthName = 20;
@@ -11,6 +11,4 @@ public class ValidationConstants
     public const int MaxPasswordHashLength = 128;
     public const int MinPasswordLength = 5;
     public const int MaxTokenLength = 2048;
-
-    public const string SuperPassword = "12345";
 }

@@ -18,9 +18,10 @@ public class AuthController : ControllerBase
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(
-        [FromBody] RegisterRequestDto requestDto)
+        [FromBody] RegisterRequestDto requestDto,
+        CancellationToken ct)
     {
-        var result = await _userService.RegisterAsync(requestDto.ToRequest());
+        var result = await _userService.RegisterAsync(requestDto.ToRequest(), ct);
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(
             result.GetErrors()
@@ -28,7 +29,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("signin")]
-    public async Task<ActionResult<SinginResponseDto>> SigninAsync([FromBody] SigninRequestDto signinRequestDto, CancellationToken ct)
+    public async Task<ActionResult<SinginResponseDto>> SigninAsync([FromBody] SigninRequestDto signinRequestDto,
+        CancellationToken ct)
     {
         var result = await _userService.SingInAsync(signinRequestDto.ToModel(), ct);
 

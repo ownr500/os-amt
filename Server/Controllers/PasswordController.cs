@@ -19,10 +19,10 @@ public class PasswordController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Change([FromBody] PasswordChangeDto passwordChangeDto)
+    public async Task<IActionResult> Change([FromBody] PasswordChangeDto passwordChangeDto, CancellationToken ct)
     {
-        var result = await _userService.PasswordChangeAsync(passwordChangeDto.ToModel());
-        if (result.IsSuccess) return new OkResult();
+        var result = await _userService.PasswordChangeAsync(passwordChangeDto.ToModel(), ct);
+        if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 }

@@ -8,9 +8,8 @@ namespace API.Services.Interfaces;
 public interface ITokenService
 {
     Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct);
-    Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleName> roles, CancellationToken ct);
-    Task<bool> CheckActiveToken(StringValues header);
+    Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleNames> roles, CancellationToken ct);
     Task<bool> CheckRevokedToken(StringValues header);
-    Task<Result> RevokeTokens(Guid userId, CancellationToken ct);
+    Task RevokeTokens(Guid userId, CancellationToken ct);
     
 }

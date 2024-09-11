@@ -2,6 +2,6 @@
 
 public record PasswordChangeModel(
     string Login,
-    string OldPassword,
+    string CurrentPassword,
     string NewPassword
     );

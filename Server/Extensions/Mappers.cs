@@ -31,7 +31,7 @@ public static class Mappers
     {
         return new PasswordChangeModel(
             Login: dto.Login,
-            OldPassword: dto.OldPassword,
+            CurrentPassword: dto.CurrentPassword,
             NewPassword: dto.NewPassword
         );
     }
@@ -59,7 +59,7 @@ public static class Mappers
            user.FirstName,
            user.LastName,
            user.Login,
-           user.UserRoles.Select(x => x.Role.RoleName).ToList()
+           user.UserRoles.Select(x => x.Role.RoleNames).ToList()
             );
     }
 
@@ -78,12 +78,5 @@ public static class Mappers
             model.Login,
             model.Roles
         );
-    }
-
-    public static MakeUserAdminModel ToModel(this UserToAdminDto dto)
-    {
-        return new MakeUserAdminModel(
-            dto.Login,
-            dto.SuperPassword);
     }
 }

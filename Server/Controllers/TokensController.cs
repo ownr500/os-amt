@@ -33,8 +33,7 @@ public class TokensController : ControllerBase
     public async Task<IActionResult> Revoke(CancellationToken ct)
     {
         var userId = _userService.GetUserIdFromContext();
-        var result = await _tokenService.RevokeTokens(userId, ct);
-        if (result.IsSuccess) return Ok();
-        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
+        await _tokenService.RevokeTokens(userId, ct);
+        return Ok();
     }
 }

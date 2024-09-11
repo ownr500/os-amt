@@ -9,9 +9,9 @@ public class ApplicationDbContext : DbContext
 {
     public DbSet<UserEntity> Users { get; set; } = default!;
     public DbSet<TokenEntity> Tokens { get; set; } = default!;
-    public DbSet<RoleEntity> Roles { get; set; }
-    public DbSet<UserRoleEntity> UserRoles { get; set; }
-    public DbSet<RevokedTokenEntity> RevokedTokens { get; set; }
+    public DbSet<RoleEntity> Roles { get; set; } = default!;
+    public DbSet<UserRoleEntity> UserRoles { get; set; } = default!;
+    public DbSet<RevokedTokenEntity> RevokedTokens { get; set; } = default!;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options) {}
@@ -26,13 +26,13 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<RoleEntity>().HasData(
             new RoleEntity
             {
-                Id = RoleConstants.AdminGuid,
-                RoleName = RoleName.Admin
+                Id = RoleConstants.AdminRoleId,
+                RoleNames = RoleNames.Admin
             },
             new RoleEntity
             {
-                Id = RoleConstants.UserGuid,
-                RoleName = RoleName.User
+                Id = RoleConstants.UserRoleId,
+                RoleNames = RoleNames.User
             });
 
         modelBuilder.Entity<UserEntity>()

@@ -19,17 +19,17 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("{login}")]
-    public async Task<IActionResult> Delete([FromRoute] string login)
+    public async Task<IActionResult> Delete([FromRoute] string login, CancellationToken ct)
     {
-        var result = await _userService.DeleteAsync(login, HttpContext.RequestAborted);
+        var result = await _userService.DeleteAsync(login, ct);
         if (result.IsSuccess) return NoContent();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 
     [HttpPatch]
-    public async Task<IActionResult> Change([FromBody] ChangeRequestDto requestDto)
+    public async Task<IActionResult> Change([FromBody] ChangeRequestDto requestDto, CancellationToken ct)
     {
-        var result = await _userService.ChangeAsync(requestDto.ToRequest());
+        var result = await _userService.ChangeAsync(requestDto.ToRequest(), ct);
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }

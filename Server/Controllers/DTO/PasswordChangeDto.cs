@@ -10,7 +10,7 @@ public record PasswordChangeDto(
     string Login,
     [property: JsonPropertyName("oldPassword")]
     [StringLength(ValidationConstants.MaxPasswordLength, MinimumLength = ValidationConstants.MinPasswordLength)]
-    string OldPassword,
+    string CurrentPassword,
     [property: JsonPropertyName("newPassword")]
     [StringLength(ValidationConstants.MaxPasswordLength, MinimumLength = ValidationConstants.MinPasswordLength)]
     string NewPassword

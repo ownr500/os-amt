@@ -19,7 +19,6 @@ public class TokenService : ITokenService
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly ApplicationDbContext _dbContext;
     private readonly IHttpContextAccessor _contextAccessor;
-    private readonly IUserService _userService;
     private const string SecretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
 
     public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext,
@@ -30,7 +29,7 @@ public class TokenService : ITokenService
         _contextAccessor = contextAccessor;
     }
 
-    public string GenerateAccessToken(Guid userId, List<RoleName> roles, out DateTimeOffset expirationDate)
+    private string GenerateAccessToken(Guid userId, List<RoleNames> roles, out DateTimeOffset expirationDate)
     {
         expirationDate = DateTimeOffset.UtcNow.AddHours(1);
         var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x.ToString()));
@@ -54,7 +53,7 @@ public class TokenService : ITokenService
         return _tokenHandler.WriteToken(options);
     }
 
-    public string GenerateRefreshToken(Guid userId, out DateTimeOffset expirationDate)
+    private string GenerateRefreshToken(Guid userId, out DateTimeOffset expirationDate)
     {
         expirationDate = DateTimeOffset.UtcNow.AddDays(1);
 
@@ -77,7 +76,6 @@ public class TokenService : ITokenService
 
     public async Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
-        // var tokenEntity = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.RefreshToken == token, cancellationToken: ct);
         var model = await _dbContext.Tokens
             .Where(x => x.RefreshToken == token && x.RefreshTokenActive && x.RefreshTokenExpireAt > DateTimeOffset.UtcNow)
             .Select(x =>
@@ -86,7 +84,7 @@ public class TokenService : ITokenService
                     userId = x.User.Id,
                     token = x,
                     roles = x.User.UserRoles
-                        .Select(u => u.Role.RoleName)
+                        .Select(u => u.Role.RoleNames)
                         .ToList()
                 }
             )
@@ -103,28 +101,13 @@ public class TokenService : ITokenService
         return Result.Fail(MessageConstants.InvalidRefreshToken);
     }
 
-    public async Task AddTokenAsync(string token)
-    {
-        var context = _contextAccessor.HttpContext;
-        if (context is null) return;
-
-        var newToken = new TokenEntity
-        {
-            Id = Guid.NewGuid(),
-            AccessToken = token
-        };
-        await _dbContext.Tokens.AddAsync(newToken);
-        await _dbContext.SaveChangesAsync();
-    }
-
-    public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleName> roles, CancellationToken ct)
+    public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleNames> roles, CancellationToken ct)
     {
         var accessToken = GenerateAccessToken(userId, roles, out var accessTokenExpireAt);
         var refreshToken = GenerateRefreshToken(userId, out var refreshTokenExpireAt);
 
         var token = new TokenEntity
         {
-            Id = Guid.NewGuid(),
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             UserId = userId,
@@ -140,17 +123,6 @@ public class TokenService : ITokenService
         return new TokenModel(accessToken, refreshToken);
     }
 
-    public async Task<bool> CheckActiveToken(StringValues header)
-    {
-        var headerArray = header.ToString().Split(' ');
-        if (headerArray.Length == 2)
-        {
-            var token = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.AccessToken == headerArray[1]);
-            if (token is not null && token.RefreshTokenActive) return true;
-        }
-        return false;
-    }
-
     public async Task<bool> CheckRevokedToken(StringValues header)
     {
         var headerArray = header.ToString().Split(' ');
@@ -163,7 +135,7 @@ public class TokenService : ITokenService
         return true;
     }
     
-    public async Task<Result> RevokeTokens(Guid userId, CancellationToken ct)
+    public async Task RevokeTokens(Guid userId, CancellationToken ct)
     {
         var revokedTokens = await _dbContext.Tokens
             .Where(x => x.UserId == userId && x.RefreshTokenActive)
@@ -196,6 +168,5 @@ public class TokenService : ITokenService
             await _dbContext.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        return Result.Ok();
     }
 }

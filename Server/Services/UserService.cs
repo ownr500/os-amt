@@ -27,14 +27,13 @@ public class UserService : IUserService
         _contextAccessor = contextAccessor;
     }
 
-    public async Task<Result> RegisterAsync(RegisterRequest request)
+    public async Task<Result> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
         var userExists = _dbContext.Users.Any(x => x.LoginNormalized == request.Login.ToLower());
         if (userExists) return Result.Fail(MessageConstants.UserAlreadyRegistered);
 
         var user = new UserEntity
         {
-            Id = Guid.NewGuid(),
             Age = request.Age,
             FirstName = request.FirstName,
             LastName = request.LastName,
@@ -43,8 +42,9 @@ public class UserService : IUserService
             PasswordHash = GeneratePasswordHash(request.Password)
         };
 
-        await _dbContext.Users.AddAsync(user);
-        await _dbContext.SaveChangesAsync();
+        user.UserRoles.Add(new UserRoleEntity { RoleId = RoleConstants.UserRoleId });
+        await _dbContext.Users.AddAsync(user, ct);
+        await _dbContext.SaveChangesAsync(ct);
         return Result.Ok();
     }
 
@@ -58,35 +58,35 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result> ChangeAsync(ChangeRequest changeRequest)
+    public async Task<Result> ChangeAsync(ChangeRequest changeRequest, CancellationToken ct)
     {
         var userId = GetUserIdFromContext();
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, ct);
         if (user is null) return Result.Fail(MessageConstants.UserNotFound);
 
         user.FirstName = changeRequest.FirstName;
         user.LastName = changeRequest.LastName;
 
         _dbContext.Users.Update(user);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(ct);
         return Result.Ok();
     }
 
-    public async Task<Result> PasswordChangeAsync(PasswordChangeModel model)
+    public async Task<Result> PasswordChangeAsync(PasswordChangeModel model, CancellationToken ct)
     {
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.LoginNormalized == model.Login.ToLower());
+        var user = await GetUserByLoginAsync(model.Login.ToLower(), ct);
 
         if (user == null)
         {
             return Result.Fail(MessageConstants.UserNotFound);
         }
 
-        if (user.PasswordHash != GeneratePasswordHash(model.OldPassword))
+        if (user.PasswordHash != GeneratePasswordHash(model.CurrentPassword))
             return Result.Fail(MessageConstants.OldPasswordNotMatch);
 
         user.PasswordHash = GeneratePasswordHash(model.NewPassword);
         _dbContext.Users.Update(user);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(ct);
         return Result.Ok();
     }
 
@@ -101,7 +101,7 @@ public class UserService : IUserService
             .Select(x => new
             {
                 userId = x.Id,
-                userRoles = x.UserRoles.Select(u => u.Role.RoleName).ToList()
+                userRoles = x.UserRoles.Select(u => u.Role.RoleNames).ToList()
             })
             .FirstOrDefaultAsync(ct);
 
@@ -125,7 +125,7 @@ public class UserService : IUserService
         return users;
     }
 
-    public async Task<Result> AddRoleAsync(Guid userId, RoleName role, CancellationToken ct)
+    public async Task<Result> AddRoleAsync(Guid userId, RoleNames role, CancellationToken ct)
     {
         var roleId = RoleConstants.RoleNameToGuid[role];
         var roleExists = await _dbContext.UserRoles
@@ -133,17 +133,17 @@ public class UserService : IUserService
         if (roleExists) return Result.Fail(MessageConstants.UserAlreadyHasRole);
         var userRole = new UserRoleEntity
         {
-            Id = Guid.NewGuid(),
             RoleId = roleId,
             UserId = userId
         };
 
         await _dbContext.UserRoles.AddAsync(userRole, ct);
         await _dbContext.SaveChangesAsync(ct);
+        await _tokenService.RevokeTokens(userId, ct);
         return Result.Ok();
     }
 
-    public async Task<Result> RemoveRoleAsync(Guid userId, RoleName role, CancellationToken ct)
+    public async Task<Result> RemoveRoleAsync(Guid userId, RoleNames role, CancellationToken ct)
     {
         var roleId = RoleConstants.RoleNameToGuid[role];
         var existingRole = await _dbContext.UserRoles
@@ -152,7 +152,7 @@ public class UserService : IUserService
         _dbContext.UserRoles.Remove(existingRole);
         await _dbContext.SaveChangesAsync(ct);
 
-        if (role == RoleName.Admin) await _tokenService.RevokeTokens(userId, ct);
+        await _tokenService.RevokeTokens(userId, ct);
         return Result.Ok();
     }
 
@@ -188,3 +188,4 @@ public class UserService : IUserService
         return userId;
     }
 }
+
