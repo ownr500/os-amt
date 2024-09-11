@@ -121,26 +121,6 @@ public class UserService : IUserService
         return users.Select(x => x.ToModel()).ToList();
     }
 
-    public async Task<Result> MakeUserAdmin(Guid userId, CancellationToken ct)
-    {
-        var adminRole = await _dbContext.Roles.FirstAsync(x => x.RoleName == RoleName.Admin, ct);
-        var alreadyAdmin =
-            await _dbContext.UserRoles.AnyAsync(x => x.UserId == userId && x.RoleId == adminRole.Id, ct);
-        if (alreadyAdmin) return Result.Fail(MessageConstants.UserAlreadyAdmin);
-
-        var userRole = new UserRoleEntity
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            RoleId = adminRole.Id
-        };
-
-        await _dbContext.UserRoles.AddAsync(userRole, ct);
-        await _dbContext.SaveChangesAsync(ct);
-
-        return Result.Ok();
-    }
-    
     public async Task<Result> AddRoleAsync(Guid userId, RoleName role, CancellationToken ct)
     {
         var roleId = RoleConstants.RoleNameToGuid[role];

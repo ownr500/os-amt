@@ -29,14 +29,6 @@ public class AdminController : ControllerBase
         );
     }
 
-    [HttpPost("makeAdmin")]
-    public async Task<IActionResult> MakeUserAdmin([FromQuery] Guid userId, CancellationToken ct)
-    {
-        var result = await _userService.MakeUserAdmin(userId, ct);
-        if (result.IsSuccess) return Ok();
-        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
-    }
-
     [HttpPost("revoke/{userId:guid}")]
     public async Task<IActionResult> Revoke([FromRoute] Guid userId, CancellationToken ct)
     {
