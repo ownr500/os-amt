@@ -171,17 +171,17 @@ public class TokenService : ITokenService
         var guid1 = Guid.NewGuid();
         var guid2 = Guid.NewGuid();
         
-        var revokedTokensCombined = await _dbContext.Tokens
+        var revokedTokens = await _dbContext.Tokens
             .Where(x => x.UserId == userId && x.RefreshTokenActive)
-            .Select(x => new CombinedTokenModel
+            .SelectMany(x => new []
                 {
-                    Entity1 = new RevokedTokenEntity
+                    new RevokedTokenEntity
                     {
                         Id = guid1,
                         Token = x.AccessToken,
                         TokenExpireAt = x.AccessTokenExpireAt
                     },
-                    Entity2 = new RevokedTokenEntity
+                    new RevokedTokenEntity
                     {
                         Id = guid2,
                         Token = x.RefreshToken,
@@ -189,15 +189,9 @@ public class TokenService : ITokenService
                     }
                 }
             )
-            .ToListAsync(ct);
-
-        var revokedTokensToAdd = revokedTokensCombined
-            .SelectMany(x => new[]
-            {
-                x.Entity1,
-                x.Entity2
-            }).ToList();
-        _dbContext.RevokedTokens.AddRange(revokedTokensToAdd);
+            .ToListAsync(ct);        
+        
+        _dbContext.RevokedTokens.AddRange(revokedTokens);
         await _dbContext.Tokens
             .Where(x => x.UserId == userId && x.RefreshTokenActive)
             .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
