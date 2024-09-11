@@ -162,13 +162,14 @@ public class UserService : IUserService
     public async Task<Result> RemoveRoleAsync(Guid userId, RoleName role, CancellationToken ct)
     {
         var roleId = RoleConstants.RoleNameToGuid[role];
-        var roleExists = await _dbContext.UserRoles
-            .AnyAsync(x => x.UserId == userId && x.RoleId == roleId, ct);
-        if (!roleExists) return Result.Fail(MessageConstants.UserHasNoRole);
-        // _dbContext.UserRoles.
+        var existingRole = await _dbContext.UserRoles
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.RoleId == roleId, ct);
+        if (existingRole is null) return Result.Fail(MessageConstants.UserHasNoRole);
+        _dbContext.UserRoles.Remove(existingRole);
+        await _dbContext.SaveChangesAsync(ct);
 
-
-        throw new NotImplementedException();
+        if (role == RoleName.Admin) await _tokenService.RevokeTokens(userId, ct);
+        return Result.Ok();
     }
 
     private static string GeneratePasswordHash(string password)
