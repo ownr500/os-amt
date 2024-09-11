@@ -13,10 +13,12 @@ namespace API.Controllers;
 [Route("api/[controller]")]
 public class AdminUsersController : ControllerBase
 {
+    private readonly ITokenService _tokenService;
     private readonly IUserService _userService;
 
-    public AdminUsersController(IUserService userService)
+    public AdminUsersController(ITokenService tokenService, IUserService userService)
     {
+        _tokenService = tokenService;
         _userService = userService;
     }
     
@@ -32,6 +34,23 @@ public class AdminUsersController : ControllerBase
     public async Task<IActionResult> RemoveRole([FromRoute] Guid id, [FromBody] RoleName role, CancellationToken ct)
     {
         Result result = await _userService.RemoveRoleAsync(id, role, ct);
+        if (result.IsSuccess) return Ok();
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
+    }
+    
+    [HttpGet("get-users")]
+    public async Task<ActionResult<UserListResponseDto>> GetUsers(CancellationToken ct)
+    {
+        var result = await _userService.GetUsers(ct);
+        return new UserListResponseDto(
+            result.ToDtoList()
+        );
+    }
+    
+    [HttpPost("{id:guid}/revoke-all-tokens")]
+    public async Task<IActionResult> Revoke([FromRoute] Guid id, CancellationToken ct)
+    {
+        var result = await _tokenService.RevokeTokens(id, ct);
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
