@@ -117,8 +117,12 @@ public class UserService : IUserService
 
     public async Task<List<UserModel>> GetUsers(CancellationToken ct)
     {
-        var users = await _dbContext.Users.ToListAsync(ct);
-        return users.Select(x => x.ToModel()).ToList();
+        var users = await _dbContext.Users
+            .Include(x => x.UserRoles)
+            .ThenInclude(u => u.Role)
+            .Select(x => x.ToModel())
+            .ToListAsync(ct);
+        return users;
     }
 
     public async Task<Result> AddRoleAsync(Guid userId, RoleName role, CancellationToken ct)
