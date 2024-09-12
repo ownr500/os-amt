@@ -18,12 +18,14 @@ public class UserService : IUserService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ITokenService _tokenService;
+    private readonly IEmailService _emailService;
     private readonly IHttpContextAccessor _contextAccessor;
 
-    public UserService(ApplicationDbContext dbContext, ITokenService tokenService, IHttpContextAccessor contextAccessor)
+    public UserService(ApplicationDbContext dbContext, ITokenService tokenService, IEmailService emailService, IHttpContextAccessor contextAccessor)
     {
         _dbContext = dbContext;
         _tokenService = tokenService;
+        _emailService = emailService;
         _contextAccessor = contextAccessor;
     }
 
@@ -188,6 +190,17 @@ public class UserService : IUserService
         }
 
         return userId;
+    }
+
+    public async Task<Result> GetRecoveryLinkAsync(string email, CancellationToken ct)
+    {
+        var userId = await _dbContext.Users
+            .Where(x => x.EmailNormalized == email.ToLower())
+            .Select(u => u.Id)
+            .FirstOrDefaultAsync(ct);
+        if (userId == Guid.Empty) return Result.Fail(MessageConstants.EmailNotFound);
+        await _emailService.SendRecoveryLink(userId, email, ct);
+        return Result.Ok();
     }
 }
 
