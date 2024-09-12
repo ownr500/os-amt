@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<RoleEntity> Roles { get; set; } = default!;
     public DbSet<UserRoleEntity> UserRoles { get; set; } = default!;
     public DbSet<RevokedTokenEntity> RevokedTokens { get; set; } = default!;
+    public DbSet<RecoveryTokenEntity> RecoveryTokens { get; set; } = default!;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

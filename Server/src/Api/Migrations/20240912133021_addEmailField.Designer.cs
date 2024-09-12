@@ -4,6 +4,7 @@ using API.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240912133021_addEmailField")]
+    partial class addEmailField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,28 +24,6 @@ namespace API.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("API.Models.Entities.RecoveryTokenEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("RecoveryToken")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
-
-                    b.Property<DateTimeOffset>("RecoveryTokenExpireAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecoveryToken")
-                        .IsUnique();
-
-                    b.ToTable("RecoveryTokens");
-                });
 
             modelBuilder.Entity("API.Models.Entities.RevokedTokenEntity", b =>
                 {
@@ -228,7 +209,7 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("82a7e1ec-821e-4cf1-9028-d50c6e15f437"),
+                            Id = new Guid("3cdb2533-8321-4b7d-968a-5a7532a5e3ec"),
                             RoleId = new Guid("c9a36382-bb77-4ee7-8539-681026b43916"),
                             UserId = new Guid("561bbfaa-c44a-45f9-97c4-7182ba38b85f")
                         });
