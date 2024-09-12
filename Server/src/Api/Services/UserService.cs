@@ -37,6 +37,8 @@ public class UserService : IUserService
             Age = request.Age,
             FirstName = request.FirstName,
             LastName = request.LastName,
+            Email = request.Email,
+            EmailNormalized = request.Email.ToLower(),
             Login = request.Login,
             LoginNormalized = request.Login.ToLower(),
             PasswordHash = GeneratePasswordHash(request.Password)

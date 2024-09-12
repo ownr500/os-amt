@@ -123,6 +123,16 @@ namespace API.Migrations
                     b.Property<int>("Age")
                         .HasColumnType("int");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("EmailNormalized")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -150,6 +160,9 @@ namespace API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EmailNormalized")
+                        .IsUnique();
+
                     b.HasIndex("LoginNormalized")
                         .IsUnique();
 
@@ -160,6 +173,8 @@ namespace API.Migrations
                         {
                             Id = new Guid("561bbfaa-c44a-45f9-97c4-7182ba38b85f"),
                             Age = 30,
+                            Email = "",
+                            EmailNormalized = "",
                             FirstName = "Admin",
                             LastName = "Admin",
                             Login = "admin",
@@ -191,7 +206,7 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("db0a2bde-ae9b-44c8-be2f-17e353a17d1a"),
+                            Id = new Guid("3cdb2533-8321-4b7d-968a-5a7532a5e3ec"),
                             RoleId = new Guid("c9a36382-bb77-4ee7-8539-681026b43916"),
                             UserId = new Guid("561bbfaa-c44a-45f9-97c4-7182ba38b85f")
                         });

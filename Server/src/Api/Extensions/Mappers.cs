@@ -13,6 +13,7 @@ public static class Mappers
         return new RegisterRequest(
             dto.FirstName,
             dto.LastName,
+            dto.Email,
             dto.Age,
             dto.Login,
             dto.Password

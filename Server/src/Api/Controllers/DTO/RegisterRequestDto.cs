@@ -11,6 +11,10 @@ public record RegisterRequestDto(
     [property: JsonPropertyName("lastName")]
     [StringLength(ValidationConstants.MaxLengthName, MinimumLength = ValidationConstants.MinLengthName)]
     string LastName,
+    [property: JsonPropertyName("email")]
+    [StringLength(ValidationConstants.MaxEmailLength, MinimumLength = ValidationConstants.MinLengthName)]
+    [EmailAddress]
+    string Email,
     [property: JsonPropertyName("age")]
     [Range(ValidationConstants.MinAge, int.MaxValue)]
     int Age,
