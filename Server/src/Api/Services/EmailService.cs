@@ -5,7 +5,7 @@ namespace API.Services;
 
 public class EmailService : IEmailService
 {
-    public Task<IActionResult> SendRecoveryLink(string email, CancellationToken ct)
+    public Task<IActionResult> SendRecoveryLink(Guid userId, string email, CancellationToken ct)
     {
         
         throw new NotImplementedException();
