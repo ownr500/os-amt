@@ -1,5 +1,5 @@
 ﻿namespace API.Models.Response;
 
-public record SinginReponseModel(
+public record SinginResponseModel(
     string AccessToken,
     string RefreshToken);

@@ -90,7 +90,7 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result<SinginReponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct)
+    public async Task<Result<SinginResponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct)
     {
         var passwordHash = GeneratePasswordHash(requestModel.Password);
 
@@ -109,7 +109,7 @@ public class UserService : IUserService
 
         var tokenModel = await _tokenService.GenerateNewTokenModelAsync(model.userId, model.userRoles, ct);
 
-        return Result.Ok(new SinginReponseModel(
+        return Result.Ok(new SinginResponseModel(
             tokenModel.AccessToken,
             tokenModel.RefreshToken
         ));
