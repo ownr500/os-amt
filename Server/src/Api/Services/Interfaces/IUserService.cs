@@ -12,7 +12,7 @@ public interface IUserService
     Task<Result> DeleteAsync(string login, CancellationToken ct);
     Task<Result> ChangeAsync(ChangeRequest changeRequest, CancellationToken ct);
     Task<Result> PasswordChangeAsync(PasswordChangeModel model, CancellationToken ct);
-    Task<Result<SinginReponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct);
+    Task<Result<SinginResponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct);
     Task<List<UserModel>> GetUsers(CancellationToken ct);
     Task<Result> AddRoleAsync(Guid userId, RoleNames role, CancellationToken ct);
     Task<Result> RemoveRoleAsync(Guid userId, RoleNames role, CancellationToken ct);
