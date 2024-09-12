@@ -169,4 +169,37 @@ public class TokenService : ITokenService
             await transaction.CommitAsync(ct);
         }
     }
+    
+    
+    public async Task<string> GenerateRecoveryToken(Guid userId, CancellationToken ct)
+    {
+        var expirationDate = DateTimeOffset.UtcNow.AddMinutes(30);
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId.ToString())
+        };
+        
+        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+        var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
+        var options = new JwtSecurityToken(
+            "localhost",
+            "API Key",
+            claims: claims,
+            expires: expirationDate.UtcDateTime,
+            signingCredentials: credentials
+        );
+        
+        var token = _tokenHandler.WriteToken(options);
+        if (token == string.Empty) throw new Exception("Couldn't generate recovery token");
+
+        var recoveryTokenEntity = new RecoveryTokenEntity
+        {
+            RecoveryToken = token,
+            RecoveryTokenExpireAt = expirationDate
+        };
+
+        await _dbContext.RecoveryTokens.AddAsync(recoveryTokenEntity, ct);
+        await _dbContext.SaveChangesAsync(ct);
+        return token;
+    }
 }
