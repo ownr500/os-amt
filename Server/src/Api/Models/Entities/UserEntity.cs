@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace API.Models.Entities;
 
 [Index(nameof(LoginNormalized), IsUnique = true)]
+[Index(nameof(EmailNormalized), IsUnique = true)]
 public class UserEntity
 {
     [Key] public Guid Id { get; set; }
@@ -23,6 +24,12 @@ public class UserEntity
     [MaxLength(ValidationConstants.MaxLoginLength)]
     public string LoginNormalized { get; set; } = string.Empty;
 
+    [MaxLength(ValidationConstants.MaxEmailLength)]
+    public string Email { get; set; } = string.Empty;
+    
+    [MaxLength(ValidationConstants.MaxEmailLength)]
+    public string EmailNormalized { get; set; } = string.Empty;
+    
     [MaxLength(ValidationConstants.MaxPasswordHashLength)]
     public string PasswordHash { get; set; } = string.Empty;
 
