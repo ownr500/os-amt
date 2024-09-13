@@ -105,7 +105,7 @@ public class TokenService : ITokenService
     {
         var accessToken = GenerateAccessToken(userId, roles, out var accessTokenExpireAt);
         var refreshToken = GenerateRefreshToken(userId, out var refreshTokenExpireAt);
-
+        
         var token = new TokenEntity
         {
             AccessToken = accessToken,
@@ -183,15 +183,14 @@ public class TokenService : ITokenService
         var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
         var options = new JwtSecurityToken(
             "localhost",
-            "API Key",
+            "Recovery",
             claims: claims,
             expires: expirationDate.UtcDateTime,
             signingCredentials: credentials
         );
         
         var token = _tokenHandler.WriteToken(options);
-        if (token == string.Empty) throw new Exception("Couldn't generate recovery token");
-
+        
         var recoveryTokenEntity = new RecoveryTokenEntity
         {
             RecoveryToken = token,
