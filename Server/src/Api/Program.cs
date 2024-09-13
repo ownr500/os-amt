@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using API.Middleware;
 using API.Models;
+using API.Options;
 using API.Services;
 using API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -72,6 +73,8 @@ builder.Services.AddAuthentication(x =>
         ValidIssuer = "localhost"
     };
 });
+
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(nameof(SmtpOptions)));
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseSqlServer(connectionString));
