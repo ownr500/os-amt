@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentResults;
 
 namespace API.Services.Interfaces;
 
 public interface IEmailService
 {
-    Task<IActionResult> SendRecoveryLink(Guid userId, string email, CancellationToken ct);
+    Task<Result> SendRecoveryLink(Guid userId, string email, CancellationToken ct);
 }
