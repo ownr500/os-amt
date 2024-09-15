@@ -17,5 +17,5 @@ public interface IUserService
     Task<Result> AddRoleAsync(Guid userId, RoleNames role, CancellationToken ct);
     Task<Result> RemoveRoleAsync(Guid userId, RoleNames role, CancellationToken ct);
     Guid GetUserIdFromContext();
-    Task<Result> GetRecoveryLinkAsync(string email, CancellationToken ct);
+    Task<Result> SendRecoveryLinkAsync(string email, CancellationToken ct);
 }

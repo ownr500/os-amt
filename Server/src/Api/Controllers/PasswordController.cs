@@ -30,12 +30,12 @@ public class PasswordController : ControllerBase
 
     [AllowAnonymous]
     [HttpGet("recovery-link")]
-    public async Task<IActionResult> GetRecoveryLink([FromBody] 
+    public async Task<IActionResult> SendRecoveryLink([FromBody] 
         [EmailAddress]
         [StringLength(ValidationConstants.MaxEmailLength, MinimumLength = ValidationConstants.MinEmailLength)]
         string email, CancellationToken ct)
     {
-        var result = await _userService.GetRecoveryLinkAsync(email, ct);
+        var result = await _userService.SendRecoveryLinkAsync(email, ct);
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }

@@ -192,7 +192,7 @@ public class UserService : IUserService
         return userId;
     }
 
-    public async Task<Result> GetRecoveryLinkAsync(string email, CancellationToken ct)
+    public async Task<Result> SendRecoveryLinkAsync(string email, CancellationToken ct)
     {
         var userId = await _dbContext.Users
             .Where(x => x.EmailNormalized == email.ToLower())
