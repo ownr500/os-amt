@@ -1,7 +1,8 @@
-﻿using API.Controllers.DTO;
+﻿using System.ComponentModel.DataAnnotations;
+using API.Constants;
+using API.Controllers.DTO;
 using API.Extensions;
 using API.Services.Interfaces;
-using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,10 +29,13 @@ public class PasswordController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpPost("get-recovery-link")]
-    public async Task<IActionResult> GetRecoveryLink([FromQuery] GetRecoveryLinkRequestDto dto, CancellationToken ct)
+    [HttpGet("recovery-link")]
+    public async Task<IActionResult> GetRecoveryLink([FromBody] 
+        [EmailAddress]
+        [StringLength(ValidationConstants.MaxEmailLength, MinimumLength = ValidationConstants.MinEmailLength)]
+        string email, CancellationToken ct)
     {
-        var result = await _userService.GetRecoveryLinkAsync(dto.Email, ct);
+        var result = await _userService.GetRecoveryLinkAsync(email, ct);
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
