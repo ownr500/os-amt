@@ -12,4 +12,5 @@ public class RecoveryTokenEntity
     public string RecoveryToken { get; set; } = string.Empty;
     
     public DateTimeOffset RecoveryTokenExpireAt { get; set; }
+    public bool IsActive { get; set; }
 }
