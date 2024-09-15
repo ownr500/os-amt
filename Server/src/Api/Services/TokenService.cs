@@ -194,7 +194,8 @@ public class TokenService : ITokenService
         var recoveryTokenEntity = new RecoveryTokenEntity
         {
             RecoveryToken = token,
-            RecoveryTokenExpireAt = expirationDate
+            RecoveryTokenExpireAt = expirationDate,
+            IsActive = true
         };
 
         await _dbContext.RecoveryTokens.AddAsync(recoveryTokenEntity, ct);
