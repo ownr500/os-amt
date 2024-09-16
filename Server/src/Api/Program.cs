@@ -69,7 +69,7 @@ builder.Services.AddAuthentication(x =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ")),
-        ValidAudience = "API Key",
+        ValidAudience = "ApiKey",
         ValidIssuer = "localhost"
     };
 });
