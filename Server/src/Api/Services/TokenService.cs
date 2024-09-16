@@ -29,6 +29,34 @@ public class TokenService : ITokenService
         _contextAccessor = contextAccessor;
     }
 
+
+    private string GenerateToken(Guid userId, List<RoleNames>? roles, JwtAudience audience, out DateTimeOffset expirationDate)
+    {
+        expirationDate = roles is null ? DateTimeOffset.UtcNow.AddDays(1) : DateTimeOffset.UtcNow.AddHours(1);
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId.ToString())
+        };
+
+        if (roles is not null)
+        {
+            var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x.ToString()));
+            claims.AddRange(roleClaims);
+        }
+        
+        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+        var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
+        var options = new JwtSecurityToken(
+            "localhost",
+            audience.ToString(),
+            claims: claims,
+            expires: expirationDate.UtcDateTime,
+            signingCredentials: credentials
+        );
+
+        return _tokenHandler.WriteToken(options);
+    }
+    
     private string GenerateAccessToken(Guid userId, List<RoleNames> roles, out DateTimeOffset expirationDate)
     {
         expirationDate = DateTimeOffset.UtcNow.AddHours(1);
