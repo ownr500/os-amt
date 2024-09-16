@@ -56,30 +56,6 @@ public class TokenService : ITokenService
 
         return _tokenHandler.WriteToken(options);
     }
-    
-    private string GenerateAccessToken(Guid userId, List<RoleNames> roles, out DateTimeOffset expirationDate)
-    {
-        expirationDate = DateTimeOffset.UtcNow.AddHours(1);
-        var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x.ToString()));
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, userId.ToString())
-        };
-
-        claims.AddRange(roleClaims);
-
-        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
-        var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
-        var options = new JwtSecurityToken(
-            "localhost",
-            "API Key",
-            claims: claims,
-            expires: expirationDate.UtcDateTime,
-            signingCredentials: credentials
-        );
-
-        return _tokenHandler.WriteToken(options);
-    }
 
     private string GenerateRefreshToken(Guid userId, out DateTimeOffset expirationDate)
     {
@@ -131,7 +107,7 @@ public class TokenService : ITokenService
 
     public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleNames> roles, CancellationToken ct)
     {
-        var accessToken = GenerateAccessToken(userId, roles, out var accessTokenExpireAt);
+        var accessToken = GenerateToken(userId, roles, JwtAudience.ApiKey, out var accessTokenExpireAt);
         var refreshToken = GenerateRefreshToken(userId, out var refreshTokenExpireAt);
         
         var token = new TokenEntity
