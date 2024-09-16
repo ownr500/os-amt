@@ -57,27 +57,6 @@ public class TokenService : ITokenService
         return _tokenHandler.WriteToken(options);
     }
 
-    private string GenerateRefreshToken(Guid userId, out DateTimeOffset expirationDate)
-    {
-        expirationDate = DateTimeOffset.UtcNow.AddDays(1);
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, userId.ToString())
-        };
-        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
-        var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-        var options = new JwtSecurityToken(
-            "localhost",
-            "Refresh",
-            claims: claims,
-            expires: expirationDate.UtcDateTime,
-            signingCredentials: credentials
-        );
-
-        return _tokenHandler.WriteToken(options);
-    }
-
     public async Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
         var model = await _dbContext.Tokens
@@ -108,7 +87,7 @@ public class TokenService : ITokenService
     public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleNames> roles, CancellationToken ct)
     {
         var accessToken = GenerateToken(userId, roles, JwtAudience.ApiKey, out var accessTokenExpireAt);
-        var refreshToken = GenerateRefreshToken(userId, out var refreshTokenExpireAt);
+        var refreshToken = GenerateToken(userId, null, JwtAudience.Refresh, out var refreshTokenExpireAt);
         
         var token = new TokenEntity
         {
