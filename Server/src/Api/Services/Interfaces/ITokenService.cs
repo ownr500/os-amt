@@ -11,5 +11,5 @@ public interface ITokenService
     Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleNames> roles, CancellationToken ct);
     Task<bool> CheckRevokedToken(StringValues header);
     Task RevokeTokens(Guid userId, CancellationToken ct);
-    Task<string> GenerateRecoveryToken(Guid userId, CancellationToken ct);
+    Task<(string token, DateTimeOffset expirationDate)> GenerateToken(Guid userId, List<RoleNames>? roles, JwtAudience audience);
 }

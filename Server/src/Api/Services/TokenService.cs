@@ -30,9 +30,9 @@ public class TokenService : ITokenService
     }
 
 
-    private string GenerateToken(Guid userId, List<RoleNames>? roles, JwtAudience audience, out DateTimeOffset expirationDate)
+    public async Task<(string token, DateTimeOffset expirationDate)> GenerateToken(Guid userId, List<RoleNames>? roles, JwtAudience audience)
     {
-        expirationDate = roles is null ? DateTimeOffset.UtcNow.AddDays(1) : DateTimeOffset.UtcNow.AddHours(1);
+        var expirationDate = roles is null ? DateTimeOffset.UtcNow.AddDays(1) : DateTimeOffset.UtcNow.AddHours(1);
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId.ToString())
@@ -54,7 +54,22 @@ public class TokenService : ITokenService
             signingCredentials: credentials
         );
 
-        return _tokenHandler.WriteToken(options);
+        var token = _tokenHandler.WriteToken(options);
+
+        if (audience == JwtAudience.Recovery)
+        {
+            var recoveryTokenEntity = new RecoveryTokenEntity
+            {
+                RecoveryToken = token,
+                RecoveryTokenExpireAt = expirationDate,
+                IsActive = true
+            };
+
+            await _dbContext.RecoveryTokens.AddAsync(recoveryTokenEntity);
+            await _dbContext.SaveChangesAsync();
+        }
+        
+        return (token, expirationDate);
     }
 
     public async Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
@@ -86,8 +101,8 @@ public class TokenService : ITokenService
 
     public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleNames> roles, CancellationToken ct)
     {
-        var accessToken = GenerateToken(userId, roles, JwtAudience.ApiKey, out var accessTokenExpireAt);
-        var refreshToken = GenerateToken(userId, null, JwtAudience.Refresh, out var refreshTokenExpireAt);
+        var (accessToken, accessTokenExpireAt) = await GenerateToken(userId, roles, JwtAudience.ApiKey);
+        var (refreshToken, refreshTokenExpireAt) = await GenerateToken(userId, null, JwtAudience.Refresh);
         
         var token = new TokenEntity
         {
@@ -151,38 +166,5 @@ public class TokenService : ITokenService
             await _dbContext.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-    }
-    
-    
-    public async Task<string> GenerateRecoveryToken(Guid userId, CancellationToken ct)
-    {
-        var expirationDate = DateTimeOffset.UtcNow.AddMinutes(30);
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, userId.ToString())
-        };
-        
-        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
-        var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
-        var options = new JwtSecurityToken(
-            "localhost",
-            "Recovery",
-            claims: claims,
-            expires: expirationDate.UtcDateTime,
-            signingCredentials: credentials
-        );
-        
-        var token = _tokenHandler.WriteToken(options);
-        
-        var recoveryTokenEntity = new RecoveryTokenEntity
-        {
-            RecoveryToken = token,
-            RecoveryTokenExpireAt = expirationDate,
-            IsActive = true
-        };
-
-        await _dbContext.RecoveryTokens.AddAsync(recoveryTokenEntity, ct);
-        await _dbContext.SaveChangesAsync(ct);
-        return token;
     }
 }
