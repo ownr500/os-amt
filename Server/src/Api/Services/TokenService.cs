@@ -60,8 +60,8 @@ public class TokenService : ITokenService
         {
             var recoveryTokenEntity = new RecoveryTokenEntity
             {
-                RecoveryToken = token,
-                RecoveryTokenExpireAt = expirationDate,
+                Token = token,
+                ExpireAt = expirationDate,
                 IsActive = true
             };
 
