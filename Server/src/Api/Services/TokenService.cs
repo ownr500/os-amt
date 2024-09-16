@@ -30,7 +30,7 @@ public class TokenService : ITokenService
     }
 
 
-    public async Task<(string token, DateTimeOffset expirationDate)> GenerateToken(Guid userId, List<RoleNames>? roles, JwtAudience audience)
+    public async Task<(string token, DateTimeOffset expirationDate)> GenerateTokenAsync(Guid userId, List<RoleNames>? roles, JwtAudience audience)
     {
         var expirationDate = roles is null ? DateTimeOffset.UtcNow.AddDays(1) : DateTimeOffset.UtcNow.AddHours(1);
         var claims = new List<Claim>
@@ -101,8 +101,8 @@ public class TokenService : ITokenService
 
     public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleNames> roles, CancellationToken ct)
     {
-        var (accessToken, accessTokenExpireAt) = await GenerateToken(userId, roles, JwtAudience.ApiKey);
-        var (refreshToken, refreshTokenExpireAt) = await GenerateToken(userId, null, JwtAudience.Refresh);
+        var (accessToken, accessTokenExpireAt) = await GenerateTokenAsync(userId, roles, JwtAudience.ApiKey);
+        var (refreshToken, refreshTokenExpireAt) = await GenerateTokenAsync(userId, null, JwtAudience.Refresh);
         
         var token = new TokenEntity
         {
