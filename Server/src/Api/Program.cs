@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using API.Middleware;
 using API.Models;
+using API.Models.enums;
 using API.Options;
 using API.Services;
 using API.Services.Interfaces;
@@ -69,7 +70,7 @@ builder.Services.AddAuthentication(x =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ")),
-        ValidAudience = "ApiKey",
+        ValidAudience = JwtAudience.ApiKey.ToString(),
         ValidIssuer = "localhost"
     };
 });
