@@ -29,7 +29,7 @@ public class PasswordController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpGet("recovery-link")]
+    [HttpPost("send-recovery-email")]
     public async Task<IActionResult> SendRecoveryLink([FromBody] 
         [EmailAddress]
         [StringLength(ValidationConstants.MaxEmailLength, MinimumLength = ValidationConstants.MinEmailLength)]

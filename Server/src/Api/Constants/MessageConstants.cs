@@ -9,5 +9,4 @@ public static class MessageConstants
     public const string InvalidRefreshToken = "Invalid refresh token";
     public const string UserAlreadyHasRole = "User already has role";
     public const string UserHasNoRole = "User doesn't have role";
-    public const string EmailNotFound = "Email not found";
 }
