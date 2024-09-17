@@ -8,7 +8,6 @@ builder.RegisterConfigurationOptions();
 builder.RegisterServices();
 builder.RegisterOptions();
 builder.RegisterDbContext();
-builder.RegisterServices();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
