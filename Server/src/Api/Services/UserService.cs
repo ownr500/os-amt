@@ -111,7 +111,10 @@ public class UserService : IUserService
 
         if (model is null) return Result.Fail(MessageConstants.InvalidCredentials);
 
-        var tokenModel = await _tokenService.GenerateNewTokenModelAsync(model.userId, model.userRoles, ct);
+        var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, model.userId.ToString()) };
+        claims.AddRange(model.userRoles
+            .Select(x => new Claim(ClaimTypes.Role, x.ToString())).ToList());
+        var tokenModel = await _tokenService.GenerateNewTokenModelAsync(model.userId, claims, ct);
 
         return Result.Ok(new SinginResponseModel(
             tokenModel.AccessToken,
