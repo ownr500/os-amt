@@ -231,7 +231,7 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("5d46f838-5955-4025-85ca-20cc6226e5de"),
+                            Id = new Guid("1ff798f3-a2b2-4cd6-86f2-165d4fed054d"),
                             RoleId = new Guid("c9a36382-bb77-4ee7-8539-681026b43916"),
                             UserId = new Guid("561bbfaa-c44a-45f9-97c4-7182ba38b85f")
                         });
