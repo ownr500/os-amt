@@ -187,6 +187,26 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
+    public async Task<Result> ValidateTokenAndChangePassword(string token, string newPassword, CancellationToken ct)
+    {
+        var result = await _tokenService.ValidateRecoveryTokenAsync(token);
+        if (result.IsFailed) return Result.Fail(result.Errors);
+        await _tokenService.AddRecoveryTokenAsync(token, result.Value.ExpireAt);
+        await SetPasswordAsync(result.Value.UserId, newPassword, ct);
+        return Result.Ok();
+
+    }
+
+    private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)
+    {
+        var passwordHash = GeneratePasswordHash(newPassword);
+        await _dbContext.Users
+            .Where(x=> x.Id == userId)
+            .ExecuteUpdateAsync(x => 
+                x.SetProperty(p => 
+                    p.PasswordHash, passwordHash), ct);
+    }
+
     private static string GeneratePasswordHash(string password)
     {
         using var sha256 = SHA256.Create();
