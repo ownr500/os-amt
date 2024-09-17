@@ -179,8 +179,11 @@ public class UserService : IUserService
             .Where(x => x.EmailNormalized == email.ToLower())
             .Select(u => u.Id)
             .FirstOrDefaultAsync(ct);
+        
         if (userId == Guid.Empty) return Result.Ok();
-        await _emailService.SendRecoveryLink(userId, email, ct);
+        
+        var token = _tokenService.GenerateRecoveryToken(userId);
+        _emailService.SendRecoveryEmail(email, token, ct);
         return Result.Ok();
     }
 
