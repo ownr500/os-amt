@@ -78,7 +78,7 @@ public static class Mappers
         return new GenerateTokenModel(claims, info);
     }
 
-    public static List<Claim> ToClaims(this List<Role> roles)
+    public static List<Claim> ToClaims(this IReadOnlyCollection<Role> roles)
     {
         return roles
             .Select(x => new Claim(ClaimTypes.Role, x.ToString()))
