@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using API.Constants;
-using API.Controllers.DTO;
+﻿using API.Controllers.DTO;
 using API.Extensions;
 using API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -31,11 +29,9 @@ public class PasswordController : ControllerBase
     [AllowAnonymous]
     [HttpPost("send-recovery-email")]
     public async Task<IActionResult> SendRecoveryLink([FromBody] 
-        [EmailAddress]
-        [StringLength(ValidationConstants.MaxEmailLength, MinimumLength = ValidationConstants.MinEmailLength)]
-        string email, CancellationToken ct)
+        SendRecoveryLinkRequestDto requestDto, CancellationToken ct)
     {
-        var result = await _userService.SendRecoveryLinkAsync(email, ct);
+        var result = await _userService.SendRecoveryLinkAsync(requestDto.Email, ct);
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
