@@ -30,12 +30,12 @@ public class ApplicationDbContext : DbContext
             new RoleEntity
             {
                 Id = RoleConstants.AdminRoleId,
-                RoleName = RoleNames.Admin
+                Role = Role.Admin
             },
             new RoleEntity
             {
                 Id = RoleConstants.UserRoleId,
-                RoleName = RoleNames.User
+                Role = Role.User
             });
 
         modelBuilder.Entity<UserEntity>().HasData(

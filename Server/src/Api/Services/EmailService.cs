@@ -1,13 +1,12 @@
 ﻿using API.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
+using FluentResults;
 
 namespace API.Services;
 
 public class EmailService : IEmailService
 {
-    public Task<IActionResult> SendRecoveryLink(Guid userId, string email, CancellationToken ct)
+    public Task<Result> SendRecoveryLink(Guid userId, string email, CancellationToken ct)
     {
-        
         throw new NotImplementedException();
     }
 }

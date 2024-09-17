@@ -13,9 +13,9 @@ public interface IUserService
     Task<Result> ChangeAsync(ChangeRequest changeRequest, CancellationToken ct);
     Task<Result> PasswordChangeAsync(PasswordChangeModel model, CancellationToken ct);
     Task<Result<SinginResponseModel>> SingInAsync(SinginRequestModel requestModel, CancellationToken ct);
-    Task<List<UserModel>> GetUsers(CancellationToken ct);
-    Task<Result> AddRoleAsync(Guid userId, RoleNames role, CancellationToken ct);
-    Task<Result> RemoveRoleAsync(Guid userId, RoleNames role, CancellationToken ct);
+    Task<List<UserModel>> GetUsersAsync(CancellationToken ct);
+    Task<Result> AddRoleAsync(Guid userId, Role role, CancellationToken ct);
+    Task<Result> RemoveRoleAsync(Guid userId, Role role, CancellationToken ct);
     Guid GetUserIdFromContext();
-    Task<Result> SendRecoveryLinkAsync(string email, CancellationToken ct);
+    Task<Result> SendRecoveryEmailAsync(string email, CancellationToken ct);
 }

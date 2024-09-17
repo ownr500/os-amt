@@ -105,16 +105,13 @@ public class UserService : IUserService
             .Select(x => new
             {
                 userId = x.Id,
-                userRoles = x.UserRoles.Select(u => u.Role.RoleName).ToList()
+                userRoles = x.UserRoles.Select(u => u.Role.Role).ToList()
             })
             .FirstOrDefaultAsync(ct);
 
         if (model is null) return Result.Fail(MessageConstants.InvalidCredentials);
 
-        var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, model.userId.ToString()) };
-        claims.AddRange(model.userRoles
-            .Select(x => new Claim(ClaimTypes.Role, x.ToString())).ToList());
-        var tokenModel = await _tokenService.GenerateNewTokenModelAsync(model.userId, claims, ct);
+        var tokenModel = await _tokenService.GenerateTokenPairAsync(model.userId, model.userRoles, ct);
 
         return Result.Ok(new SinginResponseModel(
             tokenModel.AccessToken,
@@ -122,7 +119,7 @@ public class UserService : IUserService
         ));
     }
 
-    public async Task<List<UserModel>> GetUsers(CancellationToken ct)
+    public async Task<List<UserModel>> GetUsersAsync(CancellationToken ct)
     {
         var users = await _dbContext.Users
             .Include(x => x.UserRoles)
@@ -132,9 +129,9 @@ public class UserService : IUserService
         return users;
     }
 
-    public async Task<Result> AddRoleAsync(Guid userId, RoleNames role, CancellationToken ct)
+    public async Task<Result> AddRoleAsync(Guid userId, Role role, CancellationToken ct)
     {
-        var roleId = RoleConstants.RoleNameToGuid[role];
+        var roleId = RoleConstants.RoleIds[role];
         var roleExists = await _dbContext.UserRoles
             .AnyAsync(x => x.UserId == userId && x.RoleId == roleId, ct);
         if (roleExists) return Result.Fail(MessageConstants.UserAlreadyHasRole);
@@ -146,20 +143,45 @@ public class UserService : IUserService
 
         await _dbContext.UserRoles.AddAsync(userRole, ct);
         await _dbContext.SaveChangesAsync(ct);
-        await _tokenService.RevokeTokens(userId, ct);
+        await _tokenService.RevokeTokensAsync(userId, ct);
         return Result.Ok();
     }
 
-    public async Task<Result> RemoveRoleAsync(Guid userId, RoleNames role, CancellationToken ct)
+    public async Task<Result> RemoveRoleAsync(Guid userId, Role role, CancellationToken ct)
     {
-        var roleId = RoleConstants.RoleNameToGuid[role];
+        var roleId = RoleConstants.RoleIds[role];
         var existingRole = await _dbContext.UserRoles
             .FirstOrDefaultAsync(x => x.UserId == userId && x.RoleId == roleId, ct);
         if (existingRole is null) return Result.Fail(MessageConstants.UserHasNoRole);
         _dbContext.UserRoles.Remove(existingRole);
         await _dbContext.SaveChangesAsync(ct);
 
-        await _tokenService.RevokeTokens(userId, ct);
+        await _tokenService.RevokeTokensAsync(userId, ct);
+        return Result.Ok();
+    }
+
+    public Guid GetUserIdFromContext()
+    {
+        var nameIdentifier = _contextAccessor.HttpContext?.User.Claims
+            .FirstOrDefault(
+                x => string.Equals(x.Type, ClaimTypes.NameIdentifier,
+                    StringComparison.InvariantCultureIgnoreCase))?.Value;
+        if (!Guid.TryParse(nameIdentifier, out var userId))
+        {
+            throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
+        }
+
+        return userId;
+    }
+
+    public async Task<Result> SendRecoveryEmailAsync(string email, CancellationToken ct)
+    {
+        var userId = await _dbContext.Users
+            .Where(x => x.EmailNormalized == email.ToLower())
+            .Select(u => u.Id)
+            .FirstOrDefaultAsync(ct);
+        if (userId == Guid.Empty) return Result.Ok();
+        await _emailService.SendRecoveryLink(userId, email, ct);
         return Result.Ok();
     }
 
@@ -179,31 +201,6 @@ public class UserService : IUserService
     private async Task<UserEntity?> GetUserByLoginAsync(string login, CancellationToken ct)
     {
         return await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == login.ToLower(), ct);
-    }
-
-    public Guid GetUserIdFromContext()
-    {
-        var nameIdentifier = _contextAccessor.HttpContext?.User.Claims
-            .FirstOrDefault(
-                x => string.Equals(x.Type, ClaimTypes.NameIdentifier,
-                    StringComparison.InvariantCultureIgnoreCase))?.Value;
-        if (!Guid.TryParse(nameIdentifier, out var userId))
-        {
-            throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
-        }
-
-        return userId;
-    }
-
-    public async Task<Result> SendRecoveryLinkAsync(string email, CancellationToken ct)
-    {
-        var userId = await _dbContext.Users
-            .Where(x => x.EmailNormalized == email.ToLower())
-            .Select(u => u.Id)
-            .FirstOrDefaultAsync(ct);
-        if (userId == Guid.Empty) return Result.Ok();
-        await _emailService.SendRecoveryLink(userId, email, ct);
-        return Result.Ok();
     }
 }
 

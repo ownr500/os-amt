@@ -1,6 +1,6 @@
 ﻿namespace API.Controllers.DTO;
 
-public record SinginResponseDto(
+public sealed record SingInResponseDto(
     string AccessToken,
     string RefreshToken
 );

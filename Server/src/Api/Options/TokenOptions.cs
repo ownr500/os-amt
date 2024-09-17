@@ -4,5 +4,5 @@ namespace API.Options;
 
 public sealed class TokenOptions
 {
-    public Dictionary<TokenType, TokenInfo> TokenInfos { get; set; }
+    public Dictionary<TokenType, TokenInfo> TokenInfos { get; init; } = new();
 }

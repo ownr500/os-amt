@@ -21,36 +21,21 @@ public class TokenService : ITokenService
 {
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly ApplicationDbContext _dbContext;
-    private readonly IHttpContextAccessor _contextAccessor;
     private readonly TokenOptions _options;
-    private const string SecretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
 
-    public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext,
-        IHttpContextAccessor contextAccessor, IOptions<TokenOptions> options)
+    public TokenService(
+        JwtSecurityTokenHandler tokenHandler,
+        ApplicationDbContext dbContext,
+        IOptions<TokenOptions> options
+    )
     {
         _tokenHandler = tokenHandler;
         _dbContext = dbContext;
-        _contextAccessor = contextAccessor;
         _options = options.Value;
     }
 
 
-    private string GenerateToken(GenerateTokenModel model)
-    {
-        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(model.SecretKey));
-        var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
-        var options = new JwtSecurityToken(
-            model.Issuer,
-            model.Issuer,
-            claims: model.Claims,
-            expires: model.ExpireAt,
-            signingCredentials: credentials
-        );
-        
-        return _tokenHandler.WriteToken(options);
-    }
-    
-    public async Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
+    public async Task<Result<TokenPairModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
         var model = await _dbContext.Tokens
             .Where(x => x.RefreshToken == token && x.RefreshTokenActive && x.RefreshTokenExpireAt > DateTimeOffset.UtcNow)
@@ -60,7 +45,7 @@ public class TokenService : ITokenService
                     userId = x.User.Id,
                     token = x,
                     roles = x.User.UserRoles
-                        .Select(u => u.Role.RoleName)
+                        .Select(u => u.Role.Role)
                         .ToList()
                 }
             )
@@ -69,11 +54,7 @@ public class TokenService : ITokenService
         {
             model.token.RefreshTokenActive = false;
             
-            var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, model.userId.ToString()) };
-            claims.AddRange(model.roles
-                .Select(x => new Claim(ClaimTypes.Role, x.ToString())).ToList());
-            
-            var tokenModel = await GenerateNewTokenModelAsync(model.userId, claims, ct);
+            var tokenModel = await GenerateTokenPairAsync(model.userId, model.roles, ct);
             _dbContext.Tokens.Update(model.token);
             await _dbContext.SaveChangesAsync(ct);
             return Result.Ok(tokenModel);
@@ -82,28 +63,18 @@ public class TokenService : ITokenService
         return Result.Fail(MessageConstants.InvalidRefreshToken);
     }
 
-    public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<Claim> claims, CancellationToken ct)
+    public async Task<TokenPairModel> GenerateTokenPairAsync(Guid userId, List<Role> roleNames, CancellationToken ct)
     {
-        var accessTokenInfo = _options.TokenInfos.GetValueOrDefault(TokenType.Access);
-        var refreshTokenInfo = _options.TokenInfos.GetValueOrDefault(TokenType.Refresh);
+        var accessToken = GenerateToken(userId, roleNames, TokenType.Access);
+        var refreshToken = GenerateToken(userId, roleNames, TokenType.Refresh);
 
-        if (accessTokenInfo is null || refreshTokenInfo is null) throw new ArgumentNullException();
-
-        var accessTokenExpireAt = DateTime.UtcNow.AddMinutes(accessTokenInfo.LifeTimeInMinutes);
-        var refreshTokenExpireAt = DateTime.UtcNow.AddMinutes(refreshTokenInfo.LifeTimeInMinutes);
-        var generateAccessTokenModel = accessTokenInfo.ToModel(userId, claims, accessTokenExpireAt);
-        var generateRefreshTokenModel = refreshTokenInfo.ToModel(userId, claims, refreshTokenExpireAt);
-
-        var accessToken = GenerateToken(generateAccessTokenModel);
-        var refreshToken = GenerateToken(generateRefreshTokenModel);
-        
         var token = new TokenEntity
         {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
+            AccessToken = accessToken.Token,
+            RefreshToken = refreshToken.Token,
             UserId = userId,
-            AccessTokenExpireAt = accessTokenExpireAt,
-            RefreshTokenExpireAt = refreshTokenExpireAt,
+            AccessTokenExpireAt = accessToken.ExpireAt,
+            RefreshTokenExpireAt = refreshToken.ExpireAt,
             RefreshTokenActive = true,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -111,10 +82,10 @@ public class TokenService : ITokenService
         await _dbContext.AddAsync(token, ct);
         await _dbContext.SaveChangesAsync(ct);
 
-        return new TokenModel(accessToken, refreshToken);
+        return new TokenPairModel(accessToken.Token, refreshToken.Token);
     }
 
-    public async Task<bool> CheckRevokedToken(StringValues header)
+    public async Task<bool> ValidateAuthHeader(StringValues header)
     {
         var headerArray = header.ToString().Split(' ');
         if (headerArray.Length == 2)
@@ -126,18 +97,18 @@ public class TokenService : ITokenService
         return true;
     }
     
-    public async Task RevokeTokens(Guid userId, CancellationToken ct)
+    public async Task RevokeTokensAsync(Guid userId, CancellationToken ct)
     {
         var revokedTokens = await _dbContext.Tokens
             .Where(x => x.UserId == userId && x.RefreshTokenActive)
             .Select(x => new RevokedTokenEntity[]
                 {
-                    new RevokedTokenEntity
+                    new()
                     {
                         Token = x.AccessToken,
                         TokenExpireAt = x.AccessTokenExpireAt
                     },
-                    new RevokedTokenEntity
+                    new()
                     {
                         Token = x.RefreshToken,
                         TokenExpireAt = x.RefreshTokenExpireAt
@@ -150,8 +121,7 @@ public class TokenService : ITokenService
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
-            _dbContext.RevokedTokens.AddRange(revokedTokens
-                .SelectMany(x => x));
+            _dbContext.RevokedTokens.AddRange(revokedTokens.SelectMany(x => x));
             await _dbContext.Tokens
                 .Where(x => x.UserId == userId && x.RefreshTokenActive)
                 .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
@@ -159,5 +129,43 @@ public class TokenService : ITokenService
             await _dbContext.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
+    }
+    
+    private GeneratedTokenModel GenerateToken(Guid userId, List<Role> roleNames, TokenType type)
+    {
+        var accessTokenInfo = _options.TokenInfos.GetValueOrDefault(type);
+        if (accessTokenInfo is null) throw new ArgumentNullException(nameof(_options.TokenInfos));
+        
+        var claims = GetClaims(userId, roleNames);
+        var generateTokenModel = accessTokenInfo.ToModel(userId, claims);
+        var accessToken = GenerateToken(generateTokenModel);
+
+        return accessToken;
+    }
+
+    private GeneratedTokenModel GenerateToken(GenerateTokenModel model)
+    {
+        var expireAt = DateTimeOffset.UtcNow.AddMinutes(model.TokenInfo.LifeTimeInMinutes);
+        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(model.TokenInfo.SecretKey));
+        var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
+        var options = new JwtSecurityToken(
+            model.TokenInfo.Issuer,
+            model.TokenInfo.Audience,
+            claims: model.Claims,
+            expires: expireAt.DateTime,
+            signingCredentials: credentials
+        );
+        
+        return new GeneratedTokenModel(_tokenHandler.WriteToken(options), expireAt);
+    }
+
+    private static List<Claim> GetClaims(Guid userId, List<Role> roleNames)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId.ToString())
+        };
+        claims.AddRange(roleNames.ToClaims());
+        return claims;
     }
 }

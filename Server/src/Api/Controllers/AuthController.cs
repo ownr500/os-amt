@@ -29,12 +29,12 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("signin")]
-    public async Task<ActionResult<SinginResponseDto>> SigninAsync([FromBody] SigninRequestDto signinRequestDto,
+    public async Task<ActionResult<SingInResponseDto>> SigninAsync([FromBody] SigninRequestDto signinRequestDto,
         CancellationToken ct)
     {
         var result = await _userService.SingInAsync(signinRequestDto.ToModel(), ct);
 
-        if (result.IsSuccess) return new SinginResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
+        if (result.IsSuccess) return new SingInResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
 
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }

@@ -2,6 +2,7 @@
 using API.Controllers.DTO;
 using API.Models;
 using API.Models.Entities;
+using API.Models.enums;
 using API.Models.Request;
 using API.Options;
 using FluentResults;
@@ -62,7 +63,7 @@ public static class Mappers
            user.FirstName,
            user.LastName,
            user.Login,
-           user.UserRoles.Select(x => x.Role.RoleName).ToList()
+           user.UserRoles.Select(x => x.Role.Role).ToList()
             );
     }
 
@@ -72,7 +73,19 @@ public static class Mappers
         return userDtos;
     }
 
-    public static UserDto ToDto(this UserModel model)
+    public static GenerateTokenModel ToModel(this TokenInfo info, Guid userId, List<Claim> claims)
+    {
+        return new GenerateTokenModel(userId, claims, info);
+    }
+
+    public static List<Claim> ToClaims(this List<Role> roles)
+    {
+        return roles
+            .Select(x => new Claim(ClaimTypes.Role, x.ToString()))
+            .ToList();
+    }
+
+    private static UserDto ToDto(this UserModel model)
     {
         return new UserDto(
             model.UserId,
@@ -81,11 +94,5 @@ public static class Mappers
             model.Login,
             model.Roles
         );
-    }
-
-    public static GenerateTokenModel ToModel(this TokenInfo info, Guid userId, List<Claim> claims, DateTime expireAt)
-    {
-        return new GenerateTokenModel(
-            userId, claims, expireAt, info.SecretKey, info.Audience, info.Issuer);
     }
 }

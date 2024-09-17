@@ -22,10 +22,10 @@ public class TokensController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("refresh/{token}")]
-    public async Task<ActionResult<SinginResponseDto>> Refresh([FromRoute] string token, CancellationToken ct)
+    public async Task<ActionResult<SingInResponseDto>> Refresh([FromRoute] string token, CancellationToken ct)
     {
         var result = await _tokenService.GenerateNewTokenFromRefreshTokenAsync(token,ct);
-        if (result.IsSuccess) return new SinginResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
+        if (result.IsSuccess) return new SingInResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 
@@ -33,7 +33,7 @@ public class TokensController : ControllerBase
     public async Task<IActionResult> Revoke(CancellationToken ct)
     {
         var userId = _userService.GetUserIdFromContext();
-        await _tokenService.RevokeTokens(userId, ct);
+        await _tokenService.RevokeTokensAsync(userId, ct);
         return Ok();
     }
 }

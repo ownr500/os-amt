@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers;
 
 [ApiController]
-[Authorize(Roles = nameof(RoleNames.Admin))]
+[Authorize(Roles = nameof(Role.Admin))]
 [Route("api/[controller]")]
 public class AdminUsersController : ControllerBase
 {
@@ -23,7 +23,7 @@ public class AdminUsersController : ControllerBase
     }
     
     [HttpPost("{id:guid}/add-role")]
-    public async Task<IActionResult> AddRole([FromRoute] Guid id, [FromBody] RoleNames role, CancellationToken ct)
+    public async Task<IActionResult> AddRole([FromRoute] Guid id, [FromBody] Role role, CancellationToken ct)
     {
         var result = await _userService.AddRoleAsync(id, role, ct);
         if (result.IsSuccess) return Ok();
@@ -31,7 +31,7 @@ public class AdminUsersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/remove-role")]
-    public async Task<IActionResult> RemoveRole([FromRoute] Guid id, [FromBody] RoleNames role, CancellationToken ct)
+    public async Task<IActionResult> RemoveRole([FromRoute] Guid id, [FromBody] Role role, CancellationToken ct)
     {
         Result result = await _userService.RemoveRoleAsync(id, role, ct);
         if (result.IsSuccess) return Ok();
@@ -41,7 +41,7 @@ public class AdminUsersController : ControllerBase
     [HttpGet("get-users")]
     public async Task<ActionResult<UserListResponseDto>> GetUsers(CancellationToken ct)
     {
-        var result = await _userService.GetUsers(ct);
+        var result = await _userService.GetUsersAsync(ct);
         return new UserListResponseDto(
             result.ToDtoList()
         );
@@ -50,7 +50,7 @@ public class AdminUsersController : ControllerBase
     [HttpPost("{id:guid}/revoke-all-tokens")]
     public async Task<IActionResult> Revoke([FromRoute] Guid id, CancellationToken ct)
     {
-        await _tokenService.RevokeTokens(id, ct);
+        await _tokenService.RevokeTokensAsync(id, ct);
         return Ok();
     }
 }

@@ -35,7 +35,7 @@ public class AuthControllerUnitTests
         // Assert
         await userService.Received(1)
             .SingInAsync(Arg.Is<SinginRequestModel>(x => x.Login == login && x.Password == password), ct);
-        var expected = new SinginResponseDto(accessToken, refreshToken);
+        var expected = new SingInResponseDto(accessToken, refreshToken);
         Assert.Equivalent(expected, result.Value);
     }
 }
