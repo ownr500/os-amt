@@ -4,5 +4,5 @@ namespace API.Core.Services;
 
 public interface IEmailService
 {
-    Task<Result> SendRecoveryLink(Guid userId, string email, CancellationToken ct);
+    Result SendRecoveryEmail(string email, string token, CancellationToken ct);
 }
