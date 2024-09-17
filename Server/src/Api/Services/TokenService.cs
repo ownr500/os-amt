@@ -2,13 +2,16 @@
 using System.Security.Claims;
 using System.Text;
 using API.Constants;
+using API.Extensions;
 using API.Models;
 using API.Models.Entities;
 using API.Models.enums;
 using API.Models.Response;
+using API.Options;
 using API.Services.Interfaces;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 
@@ -19,59 +22,34 @@ public class TokenService : ITokenService
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly ApplicationDbContext _dbContext;
     private readonly IHttpContextAccessor _contextAccessor;
+    private readonly TokenOptions _options;
     private const string SecretKey = "IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ";
 
     public TokenService(JwtSecurityTokenHandler tokenHandler, ApplicationDbContext dbContext,
-        IHttpContextAccessor contextAccessor)
+        IHttpContextAccessor contextAccessor, IOptions<TokenOptions> options)
     {
         _tokenHandler = tokenHandler;
         _dbContext = dbContext;
         _contextAccessor = contextAccessor;
+        _options = options.Value;
     }
 
 
-    public async Task<(string token, DateTimeOffset expirationDate)> GenerateTokenAsync(Guid userId, List<RoleNames>? roles, JwtAudience audience)
+    private string GenerateToken(GenerateTokenModel model)
     {
-        var expirationDate = roles is null ? DateTimeOffset.UtcNow.AddDays(1) : DateTimeOffset.UtcNow.AddHours(1);
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, userId.ToString())
-        };
-
-        if (roles is not null)
-        {
-            var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x.ToString()));
-            claims.AddRange(roleClaims);
-        }
-        
-        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(model.SecretKey));
         var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
         var options = new JwtSecurityToken(
-            "localhost",
-            audience.ToString(),
-            claims: claims,
-            expires: expirationDate.UtcDateTime,
+            model.Issuer,
+            model.Issuer,
+            claims: model.Claims,
+            expires: model.ExpireAt,
             signingCredentials: credentials
         );
-
-        var token = _tokenHandler.WriteToken(options);
-
-        if (audience == JwtAudience.Recovery)
-        {
-            var recoveryTokenEntity = new RecoveryTokenEntity
-            {
-                Token = token,
-                ExpireAt = expirationDate,
-                IsActive = true
-            };
-
-            await _dbContext.RecoveryTokens.AddAsync(recoveryTokenEntity);
-            await _dbContext.SaveChangesAsync();
-        }
         
-        return (token, expirationDate);
+        return _tokenHandler.WriteToken(options);
     }
-
+    
     public async Task<Result<TokenModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
         var model = await _dbContext.Tokens
@@ -90,7 +68,12 @@ public class TokenService : ITokenService
         if (model is not null)
         {
             model.token.RefreshTokenActive = false;
-            var tokenModel = await GenerateNewTokenModelAsync(model.userId, model.roles, ct);
+            
+            var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, model.userId.ToString()) };
+            claims.AddRange(model.roles
+                .Select(x => new Claim(ClaimTypes.Role, x.ToString())).ToList());
+            
+            var tokenModel = await GenerateNewTokenModelAsync(model.userId, claims, ct);
             _dbContext.Tokens.Update(model.token);
             await _dbContext.SaveChangesAsync(ct);
             return Result.Ok(tokenModel);
@@ -99,10 +82,20 @@ public class TokenService : ITokenService
         return Result.Fail(MessageConstants.InvalidRefreshToken);
     }
 
-    public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<RoleNames> roles, CancellationToken ct)
+    public async Task<TokenModel> GenerateNewTokenModelAsync(Guid userId, List<Claim> claims, CancellationToken ct)
     {
-        var (accessToken, accessTokenExpireAt) = await GenerateTokenAsync(userId, roles, JwtAudience.ApiKey);
-        var (refreshToken, refreshTokenExpireAt) = await GenerateTokenAsync(userId, null, JwtAudience.Refresh);
+        var accessTokenInfo = _options.TokenInfos.GetValueOrDefault(TokenType.Access);
+        var refreshTokenInfo = _options.TokenInfos.GetValueOrDefault(TokenType.Refresh);
+
+        if (accessTokenInfo is null || refreshTokenInfo is null) throw new ArgumentNullException();
+
+        var accessTokenExpireAt = DateTime.UtcNow.AddMinutes(accessTokenInfo.LifeTimeInMinutes);
+        var refreshTokenExpireAt = DateTime.UtcNow.AddMinutes(refreshTokenInfo.LifeTimeInMinutes);
+        var generateAccessTokenModel = accessTokenInfo.ToModel(userId, claims, accessTokenExpireAt);
+        var generateRefreshTokenModel = refreshTokenInfo.ToModel(userId, claims, refreshTokenExpireAt);
+
+        var accessToken = GenerateToken(generateAccessTokenModel);
+        var refreshToken = GenerateToken(generateRefreshTokenModel);
         
         var token = new TokenEntity
         {
