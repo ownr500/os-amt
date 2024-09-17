@@ -26,6 +26,7 @@ internal static class ApplicationBuilderExtensions
     {
         builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(nameof(SmtpOptions)));
         builder.Services.Configure<TokenOptions>(builder.Configuration.GetSection(nameof(TokenOptions)));
+        builder.Services.Configure<ServerOptions>(builder.Configuration.GetSection(nameof(ServerOptions)));
     }
 
     public static void RegisterDbContext(this WebApplicationBuilder builder)
