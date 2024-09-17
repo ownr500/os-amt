@@ -12,7 +12,7 @@ namespace API.Implementation.Services;
 public class EmailService : IEmailService
 {
     private readonly ServerOptions _serverOptions;
-    private readonly int _tokenLifetime;
+    private readonly int _tokenLifetimeInMinutes;
     private readonly SmtpOptions _smtpOptions;
 
 private string _mailBody = $@"
@@ -21,7 +21,7 @@ private string _mailBody = $@"
             <h1>Password Recovery</h1>
             <p>To reset your password, please click the link below:</p>
             <p><a href='{{0}}'>Reset Password</a></p>
-            <p>This link will expire in {{1}} minutes(s).</p>
+            <p>This link will expire in {{1}} minutes.</p>
         </body>
         </html>";
 
@@ -29,8 +29,8 @@ private string _mailBody = $@"
     {
         _serverOptions = serverOptions.Value;
         _smtpOptions = smtpOptions.Value;
-        var recoveryTokenInfo = tokenOptions?.Value?.TokenInfos?.GetValueOrDefault(TokenType.Recovery);
-        _tokenLifetime = recoveryTokenInfo?.LifeTimeInMinutes ?? ValidationConstants.RecoveryTokenDefaultLifeTime;
+        var recoveryTokenInfo = tokenOptions.Value.TokenInfos.GetValueOrDefault(TokenType.Recovery);
+        _tokenLifetimeInMinutes = recoveryTokenInfo?.LifeTimeInMinutes ?? throw new ArgumentNullException(nameof(recoveryTokenInfo.LifeTimeInMinutes));
     }
     public Result SendRecoveryEmail(string email, string token, CancellationToken ct)
     {
@@ -55,7 +55,7 @@ private string _mailBody = $@"
         message.Subject = MessageConstants.MailSubjectPasswordRecovery;
 
         var recoveryLink = $"{_serverOptions.Domain}{_serverOptions.TokenRecoveryPath}{token}";
-        var htmlBody = string.Format(_mailBody, recoveryLink, _tokenLifetime);
+        var htmlBody = string.Format(_mailBody, recoveryLink, _tokenLifetimeInMinutes);
 
         message.Body = new TextPart("html")
         {
