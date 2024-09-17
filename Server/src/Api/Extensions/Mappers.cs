@@ -1,7 +1,9 @@
-﻿using API.Controllers.DTO;
+﻿using System.Security.Claims;
+using API.Controllers.DTO;
 using API.Models;
 using API.Models.Entities;
 using API.Models.Request;
+using API.Options;
 using FluentResults;
 
 namespace API.Extensions;
@@ -79,5 +81,11 @@ public static class Mappers
             model.Login,
             model.Roles
         );
+    }
+
+    public static GenerateTokenModel ToModel(this TokenInfo info, Guid userId, List<Claim> claims, DateTime expireAt)
+    {
+        return new GenerateTokenModel(
+            userId, claims, expireAt, info.SecretKey, info.Audience, info.Issuer);
     }
 }
