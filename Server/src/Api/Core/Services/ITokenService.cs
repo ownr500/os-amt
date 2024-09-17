@@ -11,4 +11,5 @@ public interface ITokenService
     Task<TokenPairModel> GenerateTokenPairAsync(Guid userId, IReadOnlyCollection<Role> claims, CancellationToken ct);
     Task<bool> ValidateAuthHeader(StringValues header);
     Task RevokeTokensAsync(Guid userId, CancellationToken ct);
+    string GenerateRecoveryToken(Guid userId);
 }

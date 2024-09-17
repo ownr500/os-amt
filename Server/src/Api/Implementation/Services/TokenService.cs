@@ -85,6 +85,13 @@ public class TokenService : ITokenService
         return new TokenPairModel(accessToken.Token, refreshToken.Token);
     }
 
+    public string GenerateRecoveryToken(Guid userId)
+    {
+        var token = GenerateToken(userId, Array.Empty<Role>(), TokenType.Recovery);
+        
+        return token.Token;
+    }
+
     public async Task<bool> ValidateAuthHeader(StringValues header)
     {
         var headerArray = header.ToString().Split(' ');
