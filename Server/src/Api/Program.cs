@@ -70,12 +70,13 @@ builder.Services.AddAuthentication(x =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("IOUHBEUIQWFYQKUBQKJKHJQBIASJNDLINQ")),
-        ValidAudience = JwtAudience.ApiKey.ToString(),
+        ValidAudience = TokenType.Access.ToString(),
         ValidIssuer = "localhost"
     };
 });
 
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(nameof(SmtpOptions)));
+builder.Services.Configure<TokenOptions>(builder.Configuration.GetSection(nameof(TokenOptions)));
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseSqlServer(connectionString));
