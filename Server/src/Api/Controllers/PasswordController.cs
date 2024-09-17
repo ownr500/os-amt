@@ -34,4 +34,14 @@ public class PasswordController : ControllerBase
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
+
+    [AllowAnonymous]
+    [HttpPost("reset")]
+    public async Task<IActionResult> Reset([FromQuery] string token, 
+        [FromBody] ResetPasswordRequestDto requestDto)
+    {
+        var result = await _userService.ValidateTokenAndChangePassword(token, requestDto.NewPassword);
+        if (result.IsSuccess) return Ok();
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
+    }
 }
