@@ -1,4 +1,4 @@
-﻿using API.Services.Interfaces;
+﻿using API.Core.Services;
 using Microsoft.Net.Http.Headers;
 
 namespace API.Middleware;

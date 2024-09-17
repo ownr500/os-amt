@@ -1,12 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
+using API.Core.Enums;
+using API.Core.Options;
+using API.Core.Services;
+using API.Implementation.Services;
+using API.Infrastructure;
 using API.Middleware;
-using API.Models;
-using API.Models.enums;
-using API.Options;
-using API.Services;
-using API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;

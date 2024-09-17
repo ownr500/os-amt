@@ -1,7 +1,7 @@
-﻿using API.Controllers.DTO;
+﻿using API.Controllers.Dtos;
+using API.Core.Enums;
+using API.Core.Services;
 using API.Extensions;
-using API.Models.enums;
-using API.Services.Interfaces;
 using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

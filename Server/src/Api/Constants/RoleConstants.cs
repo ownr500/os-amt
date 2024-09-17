@@ -1,4 +1,4 @@
-﻿using API.Models.enums;
+﻿using API.Core.Enums;
 
 namespace API.Constants;
 
