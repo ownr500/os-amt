@@ -13,4 +13,5 @@ public static class ValidationConstants
     public const int MaxPasswordHashLength = 128;
     public const int MinPasswordLength = 5;
     public const int MaxTokenLength = 2048;
+    public const int RecoveryTokenDefaultLifeTime = 15;
 }
