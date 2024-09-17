@@ -4,6 +4,7 @@ using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.RegisterConfigurationOptions();
 builder.RegisterServices();
 builder.RegisterOptions();
 builder.RegisterDbContext();
