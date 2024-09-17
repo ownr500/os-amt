@@ -12,4 +12,6 @@ public interface ITokenService
     Task<bool> ValidateAuthHeader(StringValues header);
     Task RevokeTokensAsync(Guid userId, CancellationToken ct);
     string GenerateRecoveryToken(Guid userId);
+    Task<Result<RecoveryTokenModel>> ValidateRecoveryTokenAsync(string token);
+    Task AddRecoveryTokenAsync(string token, DateTime valueExpireAt);
 }

@@ -92,6 +92,18 @@ public class TokenService : ITokenService
         return token.Token;
     }
 
+    public async Task<Result<RecoveryTokenModel>> ValidateRecoveryTokenAsync(string token)
+    {
+
+        return Result.Fail(MessageConstants.InvalidRecoveryToken);
+    }
+
+    public async Task AddRecoveryTokenAsync(string token, DateTime valueExpireAt)
+    {
+        
+        throw new NotImplementedException();
+    }
+
     public async Task<bool> ValidateAuthHeader(StringValues header)
     {
         var headerArray = header.ToString().Split(' ');
