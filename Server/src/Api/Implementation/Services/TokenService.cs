@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Collections;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using API.Constants;
@@ -63,10 +64,10 @@ public class TokenService : ITokenService
         return Result.Fail(MessageConstants.InvalidRefreshToken);
     }
 
-    public async Task<TokenPairModel> GenerateTokenPairAsync(Guid userId, List<Role> roleNames, CancellationToken ct)
+    public async Task<TokenPairModel> GenerateTokenPairAsync(Guid userId, IReadOnlyCollection<Role> roleNames, CancellationToken ct)
     {
         var accessToken = GenerateToken(userId, roleNames, TokenType.Access);
-        var refreshToken = GenerateToken(userId, roleNames, TokenType.Refresh);
+        var refreshToken = GenerateToken(userId, Array.Empty<Role>(), TokenType.Refresh);
 
         var token = new TokenEntity
         {
@@ -131,12 +132,12 @@ public class TokenService : ITokenService
         }
     }
     
-    private GeneratedTokenModel GenerateToken(Guid userId, List<Role> roleNames, TokenType type)
+    private GeneratedTokenModel GenerateToken(Guid userId, IReadOnlyCollection<Role> roles, TokenType type)
     {
         var accessTokenInfo = _options.TokenInfos.GetValueOrDefault(type);
         if (accessTokenInfo is null) throw new ArgumentNullException(nameof(_options.TokenInfos));
         
-        var claims = GetClaims(userId, roleNames);
+        var claims = GetClaims(userId, roles);
         var generateTokenModel = accessTokenInfo.ToModel(claims);
         var accessToken = GenerateToken(generateTokenModel);
 
@@ -159,13 +160,13 @@ public class TokenService : ITokenService
         return new GeneratedTokenModel(_tokenHandler.WriteToken(options), expireAt);
     }
 
-    private static List<Claim> GetClaims(Guid userId, List<Role> roleNames)
+    private static List<Claim> GetClaims(Guid userId, IReadOnlyCollection<Role> roles)
     {
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId.ToString())
         };
-        claims.AddRange(roleNames.ToClaims());
+        claims.AddRange(roles.ToClaims());
         return claims;
     }
 }
