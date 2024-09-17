@@ -11,6 +11,6 @@ public class RecoveryTokenEntity
     [MaxLength(ValidationConstants.MaxTokenLength)]
     public string Token { get; set; } = string.Empty;
     
-    public DateTimeOffset ExpireAt { get; set; }
+    public DateTime ExpireAt { get; set; }
     public bool IsActive { get; set; }
 }
