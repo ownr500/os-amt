@@ -92,16 +92,64 @@ public class TokenService : ITokenService
         return token.Token;
     }
 
-    public async Task<Result<RecoveryTokenModel>> ValidateRecoveryTokenAsync(string token)
+    public async Task<Result<RecoveryTokenModel>> ValidateRecoveryTokenAsync(string token, CancellationToken ct)
     {
+        try
+        {
+            _tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true
+            }, out SecurityToken recoveryToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
+        recoveryToken.Claims
+        
+        
+        
+        var userId = recoveryToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+        var expireAt = recoveryToken.Claims.FirstOrDefault(x => x.Type == "exp")?.Value;
 
+        if (userId is not null || expireAt is not null)
+        {
+            var recoveryTokenModel = new RecoveryTokenModel
+            (
+                Guid.Parse(userId),
+                DateTimeOffset.FromUnixTimeSeconds(
+                    long.Parse(expireAt)
+                ).DateTime
+                    
+            );
+
+            
+            if (recoveryTokenModel.ExpireAt > DateTime.Now)
+            {
+                var result = await _dbContext.RecoveryTokens.FirstOrDefaultAsync(x => x.Token == token, ct);
+                if (result is null)
+                {
+                    return Result.Ok(recoveryTokenModel);
+                }
+            }
+        }
         return Result.Fail(MessageConstants.InvalidRecoveryToken);
     }
 
-    public async Task AddRecoveryTokenAsync(string token, DateTime valueExpireAt)
+    public async Task AddRecoveryTokenAsync(string token, DateTime valueExpireAt, CancellationToken ct)
     {
-        
-        throw new NotImplementedException();
+        var recoveryToken = new RecoveryTokenEntity
+        {
+            Token = token,
+            ExpireAt = valueExpireAt,
+            IsActive = true
+        };
+
+        await _dbContext.RecoveryTokens.AddAsync(recoveryToken, ct);
+        await _dbContext.SaveChangesAsync(ct);
     }
 
     public async Task<bool> ValidateAuthHeader(StringValues header)

@@ -189,12 +189,11 @@ public class UserService : IUserService
 
     public async Task<Result> ValidateTokenAndChangePassword(string token, string newPassword, CancellationToken ct)
     {
-        var result = await _tokenService.ValidateRecoveryTokenAsync(token);
+        var result = await _tokenService.ValidateRecoveryTokenAsync(token, ct);
         if (result.IsFailed) return Result.Fail(result.Errors);
-        await _tokenService.AddRecoveryTokenAsync(token, result.Value.ExpireAt);
+        await _tokenService.AddRecoveryTokenAsync(token, result.Value.ExpireAt, ct);
         await SetPasswordAsync(result.Value.UserId, newPassword, ct);
         return Result.Ok();
-
     }
 
     private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)
