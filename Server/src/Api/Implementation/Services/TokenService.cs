@@ -198,14 +198,14 @@ public class TokenService : ITokenService
 
     private GeneratedTokenModel GenerateToken(GenerateTokenModel model)
     {
-        var expireAt = DateTimeOffset.UtcNow.AddMinutes(model.TokenInfo.LifeTimeInMinutes);
+        var expireAt = DateTime.UtcNow.AddMinutes(model.TokenInfo.LifeTimeInMinutes);
         var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(model.TokenInfo.SecretKey));
         var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
         var options = new JwtSecurityToken(
             model.TokenInfo.Issuer,
             model.TokenInfo.Audience,
             claims: model.Claims,
-            expires: expireAt.DateTime,
+            expires: expireAt,
             signingCredentials: credentials
         );
         
