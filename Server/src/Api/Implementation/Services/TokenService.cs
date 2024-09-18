@@ -99,43 +99,29 @@ public class TokenService : ITokenService
             _tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuer = true,
-                ValidateAudience = true
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.TokenInfos.GetValueOrDefault(TokenType.Recovery)!.SecretKey)),
             }, out SecurityToken recoveryToken);
+            
+            var result = await _dbContext.RecoveryTokens
+                .FirstOrDefaultAsync(x => x.Token == token, ct);
+            if (result is null)
+            {
+                return Result.Ok(new RecoveryTokenModel(Guid.Parse(recoveryToken.Id), recoveryToken.ValidTo));
+            }
+            
         }
+        catch (SecurityTokenExpiredException exception)
+        {
+            return Result.Fail(MessageConstants.TokenExpired);
+        } 
         catch (Exception e)
         {
-            Console.WriteLine(e);
-            throw;
+            return Result.Fail(MessageConstants.PasswordChangeFailed);
         }
         
-        recoveryToken.Claims
-        
-        
-        
-        var userId = recoveryToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
-        var expireAt = recoveryToken.Claims.FirstOrDefault(x => x.Type == "exp")?.Value;
-
-        if (userId is not null || expireAt is not null)
-        {
-            var recoveryTokenModel = new RecoveryTokenModel
-            (
-                Guid.Parse(userId),
-                DateTimeOffset.FromUnixTimeSeconds(
-                    long.Parse(expireAt)
-                ).DateTime
-                    
-            );
-
-            
-            if (recoveryTokenModel.ExpireAt > DateTime.Now)
-            {
-                var result = await _dbContext.RecoveryTokens.FirstOrDefaultAsync(x => x.Token == token, ct);
-                if (result is null)
-                {
-                    return Result.Ok(recoveryTokenModel);
-                }
-            }
-        }
         return Result.Fail(MessageConstants.InvalidRecoveryToken);
     }
 
