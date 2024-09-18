@@ -108,11 +108,11 @@ public class TokenService : ITokenService
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenInfo.SecretKey)),
-            }, out SecurityToken recoveryToken);
+            }, out var recoveryToken);
             
-            var result = await _dbContext.RecoveryTokens
-                .FirstOrDefaultAsync(x => x.Token == token, ct);
-            if (result is null)
+            var tokenExists = await _dbContext.RecoveryTokens
+                .AnyAsync(x => x.Token == token, ct);
+            if (!tokenExists)
             {
                 var userIdClaim = claims.Claims
                     .FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
