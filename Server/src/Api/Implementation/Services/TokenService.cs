@@ -96,20 +96,29 @@ public class TokenService : ITokenService
     {
         try
         {
-            _tokenHandler.ValidateToken(token, new TokenValidationParameters
+            var tokenInfo = _options.TokenInfos.GetValueOrDefault(TokenType.Recovery);
+            if (tokenInfo is null) throw new ArgumentNullException(nameof(_options.TokenInfos));
+            
+            var claims = _tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
+                ValidAudience = tokenInfo.Audience,
+                ValidIssuer = tokenInfo.Issuer,
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.TokenInfos.GetValueOrDefault(TokenType.Recovery)!.SecretKey)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenInfo.SecretKey)),
             }, out SecurityToken recoveryToken);
             
             var result = await _dbContext.RecoveryTokens
                 .FirstOrDefaultAsync(x => x.Token == token, ct);
             if (result is null)
             {
-                return Result.Ok(new RecoveryTokenModel(Guid.Parse(recoveryToken.Id), recoveryToken.ValidTo));
+                var userIdClaim = claims.Claims
+                    .FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
+
+                if (userIdClaim is null) throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
+                return Result.Ok(new RecoveryTokenModel(Guid.Parse(userIdClaim.Value), recoveryToken.ValidTo));
             }
             
         }
@@ -119,6 +128,7 @@ public class TokenService : ITokenService
         } 
         catch (Exception e)
         {
+            Console.WriteLine(e.Message);
             return Result.Fail(MessageConstants.PasswordChangeFailed);
         }
         
@@ -186,14 +196,14 @@ public class TokenService : ITokenService
     
     private GeneratedTokenModel GenerateToken(Guid userId, IReadOnlyCollection<Role> roles, TokenType type)
     {
-        var accessTokenInfo = _options.TokenInfos.GetValueOrDefault(type);
-        if (accessTokenInfo is null) throw new ArgumentNullException(nameof(_options.TokenInfos));
+        var tokenInfo = _options.TokenInfos.GetValueOrDefault(type);
+        if (tokenInfo is null) throw new ArgumentNullException(nameof(_options.TokenInfos));
         
         var claims = GetClaims(userId, roles);
-        var generateTokenModel = accessTokenInfo.ToModel(claims);
-        var accessToken = GenerateToken(generateTokenModel);
+        var generateTokenModel = tokenInfo.ToModel(claims);
+        var token = GenerateToken(generateTokenModel);
 
-        return accessToken;
+        return token;
     }
 
     private GeneratedTokenModel GenerateToken(GenerateTokenModel model)
