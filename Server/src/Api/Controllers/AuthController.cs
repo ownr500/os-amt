@@ -29,7 +29,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("signin")]
-    public async Task<ActionResult<SingInResponseDto>> SigninAsync([FromBody] SigninRequestDto signinRequestDto,
+    public async Task<ActionResult<SingInResponseDto>> SingInAsync([FromBody] SigninRequestDto signinRequestDto,
         CancellationToken ct)
     {
         var result = await _userService.SingInAsync(signinRequestDto.ToModel(), ct);
