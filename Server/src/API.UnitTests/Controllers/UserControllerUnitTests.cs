@@ -39,7 +39,7 @@ public class UserControllerUnitTests
     }
 
     [Fact]
-    public async Task ShouldNotDelete()
+    public async Task ShouldChange()
     {
         //Arrange
         var firstName = "John";
