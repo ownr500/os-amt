@@ -22,10 +22,10 @@ public class TokensController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("refresh/{token}")]
-    public async Task<ActionResult<SingInResponseDto>> Refresh([FromRoute] string token, CancellationToken ct)
+    public async Task<ActionResult<RefreshResponseDto>> Refresh([FromRoute] string token, CancellationToken ct)
     {
         var result = await _tokenService.GenerateNewTokenFromRefreshTokenAsync(token,ct);
-        if (result.IsSuccess) return new SingInResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
+        if (result.IsSuccess) return new RefreshResponseDto(result.Value.AccessToken, result.Value.RefreshToken);
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
 

@@ -33,7 +33,7 @@ public class AdminUsersController : ControllerBase
     [HttpPost("{id:guid}/remove-role")]
     public async Task<IActionResult> RemoveRole([FromRoute] Guid id, [FromBody] Role role, CancellationToken ct)
     {
-        Result result = await _userService.RemoveRoleAsync(id, role, ct);
+        var result = await _userService.RemoveRoleAsync(id, role, ct);
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
