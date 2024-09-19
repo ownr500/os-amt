@@ -10,60 +10,63 @@ namespace API.UnitTests.Controllers;
 
 public class AuthControllerUnitTests
 {
+    private readonly IUserService _userService;
+    private const string Login = "login";
+    private const string Password = "password";
+    private const string AccessToken = "accessToken";
+    private const string RefreshToken = "refreshToken";
+    private const string FirstName = "John";
+    private const string LastName = "Doe";
+    private const string Email = "john@email.com";
+    private const int Age = 30;
+    
+    private readonly CancellationToken _ct = CancellationToken.None;
+
+    public AuthControllerUnitTests()
+    {
+        _userService = Substitute.For<IUserService>();
+    }
+    
     [Fact]
     public async Task ShouldSignInUser()
     {
         // Arrange
-        const string login = "login";
-        const string password = "password";
-        const string accessToken = "accessToken";
-        const string refreshToken = "refreshToken";
-        var ct = CancellationToken.None;
-        var singInResponseModel = new TokenPairModel(accessToken, refreshToken);
+        var singInResponseModel = new TokenPairModel(AccessToken, RefreshToken);
         var signInResult = new Result<TokenPairModel>()
             .WithValue(singInResponseModel);
-        var userService = Substitute
-            .For<IUserService>();
-        userService.SingInAsync(Arg.Any<SingInModel>(), ct)
+        _userService.SingInAsync(Arg.Any<SingInModel>(), _ct)
             .Returns(signInResult);
-        var controller  = new AuthController(userService);
-        var requestDto = new SigninRequestDto(login, password);
+        var controller  = new AuthController(_userService);
+        var requestDto = new SigninRequestDto(Login, Password);
 
         // Act
-        var result = await controller.SingInAsync(requestDto, ct);
+        var result = await controller.SingInAsync(requestDto, _ct);
 
         // Assert
-        await userService.Received(1)
-            .SingInAsync(Arg.Is<SingInModel>(x => x.Login == login && x.Password == password), ct);
-        var expected = new SingInResponseDto(accessToken, refreshToken);
+        await _userService.Received(1)
+            .SingInAsync(Arg.Is<SingInModel>(x => x.Login == Login && x.Password == Password), _ct);
+        var expected = new SingInResponseDto(AccessToken, RefreshToken);
         Assert.Equivalent(expected, result.Value);
     }
     [Fact]
     public async Task ShouldNotSignInUser()
     {
         // Arrange
-        const string login = "login";
-        const string password = "password";
-        const string accessToken = "accessToken";
-        const string refreshToken = "refreshToken";
-        var ct = CancellationToken.None;
         var error = "Test failed";
         var errors = new List<string>{error};
         var signInResult = new Result<TokenPairModel>()
             .WithErrors(errors);
-        var userService = Substitute
-            .For<IUserService>();
-        userService.SingInAsync(Arg.Any<SingInModel>(), ct)
+        _userService.SingInAsync(Arg.Any<SingInModel>(), _ct)
             .Returns(signInResult);
-        var controller  = new AuthController(userService);
-        var requestDto = new SigninRequestDto(login, password);
+        var controller  = new AuthController(_userService);
+        var requestDto = new SigninRequestDto(Login, Password);
 
         // Act
-        var result = await controller.SingInAsync(requestDto, ct);
+        var result = await controller.SingInAsync(requestDto, _ct);
         
         // Assert
-        await userService.Received(1)
-            .SingInAsync(Arg.Is<SingInModel>(x => x.Login == login && x.Password == password), ct);
+        await _userService.Received(1)
+            .SingInAsync(Arg.Is<SingInModel>(x => x.Login == Login && x.Password == Password), _ct);
         var conflictResult = Assert.IsType<ConflictObjectResult>(result.Result);
         var businessError = Assert.IsType<BusinessErrorDto>(conflictResult.Value);
         Assert.Equivalent(errors, businessError.Messages);
