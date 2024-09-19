@@ -11,6 +11,7 @@ namespace API.UnitTests.Controllers;
 public class AuthControllerUnitTests
 {
     private readonly IUserService _userService;
+    private readonly AuthController _controller;
     private const string Login = "login";
     private const string Password = "password";
     private const string AccessToken = "accessToken";
@@ -25,6 +26,7 @@ public class AuthControllerUnitTests
     public AuthControllerUnitTests()
     {
         _userService = Substitute.For<IUserService>();
+        _controller  = new AuthController(_userService);
     }
     
     [Fact]
@@ -36,11 +38,10 @@ public class AuthControllerUnitTests
             .WithValue(singInResponseModel);
         _userService.SingInAsync(Arg.Any<SingInModel>(), _ct)
             .Returns(signInResult);
-        var controller  = new AuthController(_userService);
         var requestDto = new SigninRequestDto(Login, Password);
 
         // Act
-        var result = await controller.SingInAsync(requestDto, _ct);
+        var result = await _controller.SingInAsync(requestDto, _ct);
 
         // Assert
         await _userService.Received(1)
@@ -58,11 +59,10 @@ public class AuthControllerUnitTests
             .WithErrors(errors);
         _userService.SingInAsync(Arg.Any<SingInModel>(), _ct)
             .Returns(signInResult);
-        var controller  = new AuthController(_userService);
         var requestDto = new SigninRequestDto(Login, Password);
 
         // Act
-        var result = await controller.SingInAsync(requestDto, _ct);
+        var result = await _controller.SingInAsync(requestDto, _ct);
         
         // Assert
         await _userService.Received(1)
