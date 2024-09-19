@@ -71,4 +71,27 @@ public class AuthControllerUnitTests
         var businessError = Assert.IsType<BusinessErrorDto>(conflictResult.Value);
         Assert.Equivalent(errors, businessError.Messages);
     }
+
+    [Fact]
+    public async Task ShouldRegister()
+    {
+        //Arrange
+        var registerRequestDto = new RegisterRequestDto(FirstName, LastName, Email, Age, Login, Password);
+        var registerResult = Result.Ok();
+        _userService.RegisterAsync(Arg.Any<RegisterModel>(), _ct).Returns(registerResult);
+        
+        //Act
+        var result = await _controller.Register(registerRequestDto, _ct);
+        
+        //Assert
+        await _userService.Received(1)
+            .RegisterAsync(Arg.Is<RegisterModel>(x => x.FirstName == FirstName &&
+                                                      x.LastName == LastName &&
+                                                      x.Email == Email &&
+                                                      x.Age == Age &&
+                                                      x.Login == Login &&
+                                                      x.Password == Password), _ct);
+        Assert.IsType<OkResult>(result);
+    }
+    
 }
