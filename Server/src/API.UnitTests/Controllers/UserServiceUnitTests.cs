@@ -1,11 +1,8 @@
 ﻿using API.Core.Entities;
 using API.Core.Services;
 using API.Implementation.Services;
-using API.Infrastructure;
 using API.UnitTests.Helpers;
-using FluentResults;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
 namespace API.UnitTests.Controllers;
@@ -17,8 +14,8 @@ public class UserServiceUnitTests
     private readonly IHttpContextAccessor _contextAccessor;
     private readonly CancellationToken _ct = CancellationToken.None;
     
-    private readonly string FirstUserLogin = "FirstUserLogin";
-    private readonly string SecondUserLogin = "SecondUserLogin";
+    private const string FirstUserLogin = "FirstUserLogin";
+    private const string SecondUserLogin = "SecondUserLogin";
 
     public UserServiceUnitTests()
     {
