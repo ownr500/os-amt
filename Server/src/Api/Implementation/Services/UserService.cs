@@ -85,7 +85,7 @@ public class UserService : IUserService
         }
 
         if (user.PasswordHash != GeneratePasswordHash(model.CurrentPassword))
-            return Result.Fail(MessageConstants.OldPasswordNotMatch);
+            return Result.Fail(MessageConstants.CurrentPasswordNotMatch);
 
         user.PasswordHash = GeneratePasswordHash(model.NewPassword);
         _dbContext.Users.Update(user);
