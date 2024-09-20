@@ -1,7 +1,9 @@
-﻿using API.Core.Entities;
+﻿using API.Constants;
+using API.Core.Entities;
 using API.Core.Services;
 using API.Implementation.Services;
 using API.UnitTests.Helpers;
+using FluentResults;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 
@@ -53,5 +55,34 @@ public class UserServiceUnitTests
         Assert.Equal(false, firstUserExists);
         Assert.Equal(true, secondUserExists);
         Assert.Equal(true, actual.IsSuccess);
+    }
+    
+    
+    [Fact]
+    public async Task ShouldNotDeleteAsync()
+    {
+        //Arrange
+        var errorMessage = MessageConstants.UserNotFound;
+        var errors = new List<string> { errorMessage };
+        var expectedResult = new Result().WithErrors(errors); 
+        var firstUser = new UserEntity
+        {
+            LoginNormalized = FirstUserLogin.ToLower(),
+        };
+
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Users.Add(firstUser);
+        await dbContext.SaveChangesAsync(_ct);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.DeleteAsync(SecondUserLogin.ToUpper(), _ct);
+
+        //Assert
+        var firstUserExists = dbContext.Users.Any(x => x.LoginNormalized == firstUser.LoginNormalized);
+        var secondUserExists = dbContext.Users.Any(x => x.LoginNormalized == SecondUserLogin.ToLower());
+        Assert.Equal(true, firstUserExists);
+        Assert.Equal(false, secondUserExists);
+        Assert.Equivalent(expectedResult, actual);
     }
 }
