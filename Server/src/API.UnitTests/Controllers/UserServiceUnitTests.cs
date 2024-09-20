@@ -2,60 +2,59 @@
 using API.Core.Services;
 using API.Implementation.Services;
 using API.Infrastructure;
+using API.UnitTests.Helpers;
+using FluentResults;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
 namespace API.UnitTests.Controllers;
 
 public class UserServiceUnitTests
 {
-    private readonly ApplicationDbContext _dbContext;
     private readonly ITokenService _tokenService;
     private readonly IEmailService _emailService;
     private readonly IHttpContextAccessor _contextAccessor;
-    private readonly UserService _userService;
-
-    private readonly string FirstName = "John";
-    private readonly string LastName = "Doe";
-    private readonly int Age = 30;
-    private readonly string Login = "login";
-    private readonly string LoginNormalized = "login";
-    private readonly string Email = "john@email.com";
-    private readonly string EmailNormalized = "john@email.com";
-    private readonly string PasswordHash = "ASUIDSADJQKJBQKQ";
+    private readonly CancellationToken _ct = CancellationToken.None;
     
+    private readonly string FirstUserLogin = "FirstUserLogin";
+    private readonly string SecondUserLogin = "SecondUserLogin";
 
     public UserServiceUnitTests()
     {
-        _dbContext = Substitute.For<ApplicationDbContext>();
         _tokenService = Substitute.For<ITokenService>();
         _emailService = Substitute.For<IEmailService>();
         _contextAccessor = Substitute.For<IHttpContextAccessor>();
-        _userService = new UserService(_dbContext, _tokenService, _emailService, _contextAccessor);
     }
 
     [Fact]
-    public async Task ShouldDelete()
+    public async Task ShouldDeleteAsync()
     {
         //Arrange
-        string login = "login";
-        var user = new UserEntity
+        var firstUser = new UserEntity
         {
-            Id = Guid.NewGuid(),
-            FirstName = FirstName,
-            LastName = LastName,
-            Age = Age,
-            Email = Email,
-            EmailNormalized = EmailNormalized,
-            Login = Login,
-            LoginNormalized = LoginNormalized,
-            PasswordHash = PasswordHash
+            LoginNormalized = FirstUserLogin.ToLower(),
         };
-
-
+        
+        var secondUser = new UserEntity
+        {
+            LoginNormalized = SecondUserLogin.ToLower(),
+        };
+        
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Users.Add(firstUser);
+        dbContext.Users.Add(secondUser);
+        await dbContext.SaveChangesAsync(_ct);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
         //Act
+        var actual = await userService.DeleteAsync(FirstUserLogin.ToUpper(), _ct);
 
         //Assert
-
+        var firstUserExists = dbContext.Users.Any(x => x.LoginNormalized == firstUser.LoginNormalized);
+        var secondUserExists = dbContext.Users.Any(x => x.LoginNormalized == secondUser.LoginNormalized);
+        Assert.Equal(false, firstUserExists);
+        Assert.Equal(true, secondUserExists);
+        Assert.Equal(true, actual.IsSuccess);
     }
 }
