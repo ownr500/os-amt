@@ -1,5 +1,6 @@
 ﻿using API.Constants;
 using API.Core.Entities;
+using API.Core.Models;
 using API.Core.Services;
 using API.Implementation.Services;
 using API.UnitTests.Helpers;
@@ -18,6 +19,14 @@ public class UserServiceUnitTests
     
     private const string FirstUserLogin = "FirstUserLogin";
     private const string SecondUserLogin = "SecondUserLogin";
+
+    private const string Email = "john@email.com";
+    private const int Age = 30;
+    private const string FirstName = "John";
+    private const string LastName = "Doe";
+    private const string Password = "12345";
+    
+    
 
     public UserServiceUnitTests()
     {
@@ -84,5 +93,23 @@ public class UserServiceUnitTests
         Assert.Equal(true, firstUserExists);
         Assert.Equal(false, secondUserExists);
         Assert.Equivalent(expectedResult, actual);
+    }
+
+    [Fact]
+    public async Task ShouldRegisterAsync()
+    {
+        //Arrange
+        var dbContext = DbHelper.CreateDbContext();
+        var registerModel = new RegisterModel(FirstName, LastName, Email, Age, FirstUserLogin, Password);
+        var expected = Result.Ok();
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = userService.RegisterAsync(registerModel, _ct);
+        
+        //Assert
+        var userCreated = dbContext.Users.Any(x => x.LoginNormalized == FirstUserLogin.ToLower());
+        Assert.Equal(true, userCreated);
+        Assert.Equivalent(expected, actual.Result);
     }
 }
