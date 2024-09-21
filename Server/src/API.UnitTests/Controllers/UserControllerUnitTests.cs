@@ -3,7 +3,6 @@ using API.Controllers;
 using API.Controllers.Dtos;
 using API.Core.Models;
 using API.Core.Services;
-using API.UnitTests.Helpers;
 using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -41,7 +40,7 @@ public class UserControllerUnitTests
     }
 
     [Fact]
-    public async Task ShouldNotDelete()
+    public async Task ShouldNotDeleteAsync()
     {
         //Arrange
         var login = "login";
