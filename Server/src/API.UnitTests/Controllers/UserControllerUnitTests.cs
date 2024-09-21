@@ -1,7 +1,9 @@
-﻿using API.Controllers;
+﻿using API.Constants;
+using API.Controllers;
 using API.Controllers.Dtos;
 using API.Core.Models;
 using API.Core.Services;
+using API.UnitTests.Helpers;
 using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -39,22 +41,45 @@ public class UserControllerUnitTests
     }
 
     [Fact]
+    public async Task ShouldNotDelete()
+    {
+        //Arrange
+        var login = "login";
+        var ct = CancellationToken.None;
+        var errorMessage = MessageConstants.UserNotFound;
+        var errors = new List<string> { errorMessage };
+        _userService.DeleteAsync(Arg.Any<string>(), ct)
+            .Returns(new Result().WithErrors(errors));
+
+        //Act
+        var actual = await _controller.Delete(login, ct);
+
+        //Assert
+        await _userService.Received(1)
+            .DeleteAsync(Arg.Is<string>(x => x == login), ct);
+        var conflictResult = Assert.IsType<ConflictObjectResult>(actual);
+        var businessError = Assert.IsType<BusinessErrorDto>(conflictResult.Value);
+        Assert.Equivalent(errors, businessError.Messages);
+
+    }
+    
+    [Fact]
     public async Task ShouldChange()
     {
         //Arrange
         var firstName = "John";
         var lastName = "Doe";
-        var requestDto = new ChangeRequestDto(firstName, lastName);
+        var requestDto = new UpdateFirstLastNameRequestDto(firstName, lastName);
         var changeResult = Result.Ok();
-        _userService.ChangeAsync(Arg.Any<ChangeRequest>(), _ct)
+        _userService.UpdateFirstLastNameAsync(Arg.Any<UpdateFirstLastNameModel>(), _ct)
             .Returns(changeResult);
 
         //Act
-        var actual = await _controller.Change(requestDto, _ct);
+        var actual = await _controller.UpdateFirstLastName(requestDto, _ct);
 
         //Assert
         await _userService.Received(1)
-            .ChangeAsync(Arg.Is<ChangeRequest>(x => x.FirstName == firstName
+            .UpdateFirstLastNameAsync(Arg.Is<UpdateFirstLastNameModel>(x => x.FirstName == firstName
                                                     && x.LastName == lastName), _ct);
         Assert.IsType<OkResult>(actual);
     }
