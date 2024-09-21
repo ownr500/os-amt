@@ -27,6 +27,7 @@ public class UserServiceUnitTests
     private const string FirstName = "John";
     private const string LastName = "Doe";
     private const string Password = "12345";
+    private const string NewPassword = "00000";
     
     
 
@@ -235,5 +236,30 @@ public class UserServiceUnitTests
         Assert.Equal(FirstName, updatedUser.FirstName);
         Assert.Equal(LastName, updatedUser.LastName);
         Assert.Equivalent(expected, actual);
+    }
+
+    [Fact]
+    public async Task ShouldChangePasswordAsync()
+    {
+        //Arrange
+        var dbContext = DbHelper.CreateDbContext();
+        var model = new ChangePasswordModel(FirstUserLogin, Password, NewPassword);
+        var user = new UserEntity
+        {
+            LoginNormalized = FirstUserLogin.ToLower(),
+            PasswordHash = PasswordHelper.GeneratePasswordHash(Password)
+        };
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.PasswordChangeAsync(model, _ct);
+
+        //Assert
+        var userUpdated = await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower());
+        Assert.Equal(userUpdated.PasswordHash, PasswordHelper.GeneratePasswordHash(NewPassword));
+        Assert.Equivalent(Result.Ok(), actual);
     }
 }
