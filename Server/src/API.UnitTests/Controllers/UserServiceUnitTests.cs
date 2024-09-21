@@ -112,4 +112,31 @@ public class UserServiceUnitTests
         Assert.Equal(true, userCreated);
         Assert.Equivalent(expected, actual.Result);
     }
+    [Fact]
+    public async Task ShouldNotRegisterAsync()
+    {
+        //Arrange
+        var dbContext = DbHelper.CreateDbContext();
+        var user = new UserEntity
+        {
+            LoginNormalized = FirstUserLogin.ToLower()
+        };
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        
+        var registerModel = new RegisterModel(FirstName, LastName, Email, Age, FirstUserLogin, Password);
+        var errorMessage = MessageConstants.UserAlreadyRegistered;
+        var errors = new List<string> { errorMessage };
+        var expected = new Result().WithErrors(errors);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = userService.RegisterAsync(registerModel, _ct);
+        
+        //Assert
+        var userExists = dbContext.Users.Any(x => x.LoginNormalized == FirstUserLogin.ToLower());
+        Assert.Equal(true, userExists);
+        Assert.Equivalent(expected, actual.Result);
+    }
 }
