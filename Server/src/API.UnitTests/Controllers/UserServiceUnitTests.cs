@@ -262,4 +262,32 @@ public class UserServiceUnitTests
         Assert.Equal(userUpdated.PasswordHash, PasswordHelper.GeneratePasswordHash(NewPassword));
         Assert.Equivalent(Result.Ok(), actual);
     }
+
+    [Fact]
+    public async Task ShouldNotChangePasswordWithUserNotFoundAsync()
+    {
+        //Arrange
+        var dbContext = DbHelper.CreateDbContext();
+        var model = new ChangePasswordModel(SecondUserLogin, Password, NewPassword);
+        var errorMessage = MessageConstants.UserNotFound;
+        var errors = new List<string> { errorMessage };
+        var expected = new Result().WithErrors(errors);
+        var user = new UserEntity
+        {
+            LoginNormalized = FirstUserLogin.ToLower(),
+            PasswordHash = PasswordHelper.GeneratePasswordHash(Password)
+        };
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.PasswordChangeAsync(model, _ct);
+
+        //Assert
+        var userUpdated = await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == SecondUserLogin.ToLower(), _ct);
+        Assert.Equal(true, userUpdated is null);
+        Assert.Equivalent(expected, actual);
+    }
 }
