@@ -61,7 +61,7 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result> ChangeAsync(ChangeRequest changeRequest, CancellationToken ct)
+    public async Task<Result> UpdateFirstLastNameAsync(ChangeRequest changeRequest, CancellationToken ct)
     {
         var userId = GetUserIdFromContext();
         var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, ct);
