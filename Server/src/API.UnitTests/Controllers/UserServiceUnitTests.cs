@@ -195,4 +195,45 @@ public class UserServiceUnitTests
         Assert.Equal(updatedLastName, updatedUser.LastName);
         Assert.Equivalent(Result.Ok(), actual);
     }
+
+    [Fact]
+    public async Task ShouldNotUpdateFistLastNameAsync()
+    {
+        //Arrange
+        var updatedFirstName = "Michael";
+        var updatedLastName = "Smith";
+        var model = new UpdateFirstLastNameModel(updatedFirstName, updatedLastName);
+
+        var errorMessage = MessageConstants.UserNotFound;
+        var errors = new List<string> { errorMessage };
+        var expected = new Result().WithErrors(errors);
+        
+        var firstUserId = Guid.Parse("E5608234-8E55-4122-95AC-6FC514CB5BA0");
+        var secondUserId = Guid.Parse("8753F409-C9AD-4525-9A64-C252719E386F");
+        var userClaims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, secondUserId.ToString()) };
+        _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
+        
+        var firstUser = new UserEntity
+        {
+            Id = firstUserId,
+            LoginNormalized = FirstUserLogin.ToLower(),
+            FirstName = FirstName,
+            LastName = LastName
+        };
+        
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Users.Add(firstUser);
+        await dbContext.SaveChangesAsync(_ct);
+        
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.UpdateFirstLastNameAsync(model, _ct);
+
+        //Assert
+        var updatedUser = await dbContext.Users.FirstAsync(x => x.Id == firstUserId, _ct);
+        Assert.Equal(FirstName, updatedUser.FirstName);
+        Assert.Equal(LastName, updatedUser.LastName);
+        Assert.Equivalent(expected, actual);
+    }
 }
