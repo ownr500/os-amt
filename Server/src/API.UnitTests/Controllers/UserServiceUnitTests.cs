@@ -1,4 +1,5 @@
-﻿using API.Constants;
+﻿using System.Security.Claims;
+using API.Constants;
 using API.Core.Entities;
 using API.Core.Models;
 using API.Core.Services;
@@ -158,5 +159,40 @@ public class UserServiceUnitTests
         var userExists = dbContext.Users.Any(x => x.LoginNormalized == FirstUserLogin.ToLower());
         Assert.Equal(true, userExists);
         Assert.Equivalent(expected, actual);
+    }
+
+    [Fact]
+    public async Task ShouldUpdateFistLastNameAsync()
+    {
+        //Arrange
+        var updatedFirstName = "Michael";
+        var updatedLastName = "Smith";
+        var model = new UpdateFirstLastNameModel(updatedFirstName, updatedLastName);
+        
+        var userId = Guid.Parse("E5608234-8E55-4122-95AC-6FC514CB5BA0");
+        var userClaims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) };
+        _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
+        
+        var user = new UserEntity
+        {
+            Id = userId,
+            LoginNormalized = FirstUserLogin.ToLower(),
+            FirstName = FirstName,
+            LastName = LastName
+        };
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.UpdateFirstLastNameAsync(model, _ct);
+
+        //Assert
+        var updatedUser = await dbContext.Users.FirstAsync(x => x.Id == userId, _ct);
+        Assert.Equal(updatedFirstName, updatedUser.FirstName);
+        Assert.Equal(updatedLastName, updatedUser.LastName);
+        Assert.Equivalent(Result.Ok(), actual);
     }
 }
