@@ -4,7 +4,7 @@ using API.Constants;
 
 namespace API.Controllers.Dtos;
 
-public record ChangeRequestDto(
+public record UpdateFirstLastNameRequestDto(
     [StringLength(ValidationConstants.MaxLengthName, MinimumLength = ValidationConstants.MinLengthName)]
     [property: JsonPropertyName("firstName")]
     string FirstName,

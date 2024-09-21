@@ -27,7 +27,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPatch]
-    public async Task<IActionResult> UpdateFirstLastName([FromBody] ChangeRequestDto requestDto, CancellationToken ct)
+    public async Task<IActionResult> UpdateFirstLastName([FromBody] UpdateFirstLastNameRequestDto requestDto, CancellationToken ct)
     {
         var result = await _userService.UpdateFirstLastNameAsync(requestDto.ToRequest(), ct);
         if (result.IsSuccess) return Ok();

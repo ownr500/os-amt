@@ -22,9 +22,9 @@ public static class Mappers
         );
     }
 
-    public static ChangeRequest ToRequest(this ChangeRequestDto requestDto)
+    public static UpdateFirstLastNameRequest ToRequest(this UpdateFirstLastNameRequestDto requestDto)
     {
-        return new ChangeRequest(
+        return new UpdateFirstLastNameRequest(
             requestDto.FirstName,
             requestDto.LastName
         );
