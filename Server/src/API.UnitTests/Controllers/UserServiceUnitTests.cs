@@ -6,6 +6,7 @@ using API.Implementation.Services;
 using API.UnitTests.Helpers;
 using FluentResults;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 
 namespace API.UnitTests.Controllers;
@@ -105,13 +106,32 @@ public class UserServiceUnitTests
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
         
         //Act
-        var actual = userService.RegisterAsync(registerModel, _ct);
+        var actual = await userService.RegisterAsync(registerModel, _ct);
         
         //Assert
         var userCreated = dbContext.Users.Any(x => x.LoginNormalized == FirstUserLogin.ToLower());
         Assert.Equal(true, userCreated);
-        Assert.Equivalent(expected, actual.Result);
+        Assert.Equivalent(expected, actual);
     }
+
+    [Fact]
+    public async Task ShouldRegisterWithUserRoleAsync()
+    {
+        //Arrange
+        var dbContext = DbHelper.CreateDbContext();
+        var registerModel = new RegisterModel(FirstName, LastName, Email, Age, FirstUserLogin, Password);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+
+        //Act
+        var actual = await userService.RegisterAsync(registerModel, _ct);
+        
+        //Assert
+        var user = await dbContext.Users.Include(x => x.UserRoles).FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
+        var a = user.UserRoles.First(x => x.RoleId == RoleConstants.UserRoleId);
+        Assert.Equal(RoleConstants.UserRoleId, a.RoleId);
+        Assert.Equivalent(Result.Ok(), actual);
+    }
+    
     [Fact]
     public async Task ShouldNotRegisterAsync()
     {
@@ -132,11 +152,11 @@ public class UserServiceUnitTests
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
         
         //Act
-        var actual = userService.RegisterAsync(registerModel, _ct);
+        var actual = await userService.RegisterAsync(registerModel, _ct);
         
         //Assert
         var userExists = dbContext.Users.Any(x => x.LoginNormalized == FirstUserLogin.ToLower());
         Assert.Equal(true, userExists);
-        Assert.Equivalent(expected, actual.Result);
+        Assert.Equivalent(expected, actual);
     }
 }
