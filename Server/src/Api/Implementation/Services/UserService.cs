@@ -61,14 +61,14 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateFirstLastNameAsync(UpdateFirstLastNameRequest updateFirstLastNameRequest, CancellationToken ct)
+    public async Task<Result> UpdateFirstLastNameAsync(UpdateFirstLastNameModel updateFirstLastNameModel, CancellationToken ct)
     {
         var userId = GetUserIdFromContext();
         var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, ct);
         if (user is null) return Result.Fail(MessageConstants.UserNotFound);
 
-        user.FirstName = updateFirstLastNameRequest.FirstName;
-        user.LastName = updateFirstLastNameRequest.LastName;
+        user.FirstName = updateFirstLastNameModel.FirstName;
+        user.LastName = updateFirstLastNameModel.LastName;
 
         _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync(ct);

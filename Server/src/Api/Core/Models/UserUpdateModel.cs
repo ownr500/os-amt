@@ -1,6 +1,6 @@
 ﻿namespace API.Core.Models;
 
-public record UpdateFirstLastNameRequest(
+public record UpdateFirstLastNameModel(
     string FirstName,
     string LastName
 );

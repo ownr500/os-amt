@@ -8,7 +8,7 @@ public interface IUserService
 {
     Task<Result> RegisterAsync(RegisterModel model, CancellationToken ct);
     Task<Result> DeleteAsync(string login, CancellationToken ct);
-    Task<Result> UpdateFirstLastNameAsync(UpdateFirstLastNameRequest updateFirstLastNameRequest, CancellationToken ct);
+    Task<Result> UpdateFirstLastNameAsync(UpdateFirstLastNameModel updateFirstLastNameModel, CancellationToken ct);
     Task<Result> PasswordChangeAsync(ChangePasswordModel model, CancellationToken ct);
     Task<Result<TokenPairModel>> SingInAsync(SingInModel requestModel, CancellationToken ct);
     Task<List<UserModel>> GetUsersAsync(CancellationToken ct);
