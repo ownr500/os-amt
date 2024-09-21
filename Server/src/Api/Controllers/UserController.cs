@@ -29,7 +29,7 @@ public class UserController : ControllerBase
     [HttpPatch]
     public async Task<IActionResult> UpdateFirstLastName([FromBody] UpdateFirstLastNameRequestDto requestDto, CancellationToken ct)
     {
-        var result = await _userService.UpdateFirstLastNameAsync(requestDto.ToRequest(), ct);
+        var result = await _userService.UpdateFirstLastNameAsync(requestDto.ToModel(), ct);
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }

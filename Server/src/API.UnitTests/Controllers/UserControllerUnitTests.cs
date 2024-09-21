@@ -63,7 +63,7 @@ public class UserControllerUnitTests
     }
     
     [Fact]
-    public async Task ShouldChange()
+    public async Task ShouldUpdateFirstLastNameAsync()
     {
         //Arrange
         var firstName = "John";
@@ -81,5 +81,30 @@ public class UserControllerUnitTests
             .UpdateFirstLastNameAsync(Arg.Is<UpdateFirstLastNameModel>(x => x.FirstName == firstName
                                                     && x.LastName == lastName), _ct);
         Assert.IsType<OkResult>(actual);
+    }
+
+    [Fact]
+    public async Task ShouldNotUpdateFirstLastNameAsync()
+    {
+        //Arrange
+        var firstName = "Michael";
+        var lastName = "Dee";
+        var request = new UpdateFirstLastNameRequestDto(firstName, lastName);
+        var errorMessage = MessageConstants.UserNotFound;
+        var errors = new List<string> { errorMessage };
+        var result = new Result().WithErrors(errors);
+        _userService.UpdateFirstLastNameAsync(Arg.Any<UpdateFirstLastNameModel>(), _ct)
+            .Returns(result);
+
+        //Act
+        var actual = await _controller.UpdateFirstLastName(request, _ct);
+
+        //Assert
+        await _userService.Received(1)
+            .UpdateFirstLastNameAsync(Arg.Is<UpdateFirstLastNameModel>(x => x.FirstName == firstName
+                                                                            && x.LastName == lastName), _ct);
+        var conflictResult = Assert.IsType<ConflictObjectResult>(actual);
+        var businessError = Assert.IsType<BusinessErrorDto>(conflictResult.Value);
+        Assert.Equivalent(errors, businessError.Messages);
     }
 }

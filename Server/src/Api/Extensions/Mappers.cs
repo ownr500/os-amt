@@ -22,7 +22,7 @@ public static class Mappers
         );
     }
 
-    public static UpdateFirstLastNameModel ToRequest(this UpdateFirstLastNameRequestDto requestDto)
+    public static UpdateFirstLastNameModel ToModel(this UpdateFirstLastNameRequestDto requestDto)
     {
         return new UpdateFirstLastNameModel(
             requestDto.FirstName,
