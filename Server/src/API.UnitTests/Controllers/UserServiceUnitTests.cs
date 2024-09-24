@@ -380,13 +380,13 @@ public class UserServiceUnitTests
         Assert.Equivalent(expected, actual);
     }
 
+    [Fact]
     public async Task ShouldNotSingInAsync()
     {
         //Arrange
         var dbContext = DbHelper.CreateDbContext();
-        var tokenPairModel = new TokenPairModel(AccessToken, RefreshToken);
-        var singInModel = new SingInModel(FirstUserLogin, Password);
-        var expected = new Result<TokenPairModel>().WithValue(tokenPairModel);
+        var expected = Result.Fail(MessageConstants.InvalidCredentials);
+        var singInModel = new SingInModel(SecondUserLogin, Password);
 
         var role = new RoleEntity
         {
@@ -396,7 +396,6 @@ public class UserServiceUnitTests
 
         var user = new UserEntity
         {
-            Id = Guid.Parse(UserId),
             Login = FirstUserLogin,
             LoginNormalized = FirstUserLogin.ToLower(),
             PasswordHash = PasswordHelper.GeneratePasswordHash(Password),
@@ -405,18 +404,13 @@ public class UserServiceUnitTests
                 new()
                 {
                     Id = Guid.NewGuid(),
-                    RoleId = role.Id,
-                    UserId = Guid.Parse(UserId)
+                    RoleId = role.Id
                 }
             }
         };
         dbContext.Roles.Add(role);
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-
-        _tokenService
-            .GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Contains(Role.User)), _ct)
-            .Returns(Task.FromResult(tokenPairModel));
 
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
 
@@ -425,8 +419,7 @@ public class UserServiceUnitTests
         var actual = await userService.SingInAsync(singInModel, _ct);
 
         //Assert
-        _tokenService.Received(1)
-            .GenerateTokenPairAsync(Arg.Any<Guid>(), Arg.Any<IReadOnlyCollection<Role>>(), _ct);
-        Assert.Equivalent(expected, actual);
+        Assert.Equivalent(expected.IsFailed, actual.IsFailed);
+        Assert.Equivalent(expected.Errors, actual.Errors);
     }
 }
