@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.ComponentModel;
+using System.Security.Claims;
 using API.Constants;
 using API.Core.Entities;
 using API.Core.Enums;
@@ -36,7 +37,6 @@ public class UserServiceUnitTests
     private const string UserRoleId = "6DBB3F20-3F06-4076-8E9E-8170228276E0";
     private const string AdminRoleId = "530A960B-0D95-41EF-897C-262CC53DE439";
     
-
     public UserServiceUnitTests()
     {
         _tokenService = Substitute.For<ITokenService>();
@@ -325,65 +325,56 @@ public class UserServiceUnitTests
         Assert.Equivalent(expected, actual);
     }
 
-    [Fact]
-    public async Task ShouldSingInAsync()
+    [Theory]
+    [InlineData(new [] {Role.User})]
+    [InlineData(new [] {Role.User, Role.Admin})]
+    public async Task ShouldSingInAsync(Role[] roles)
     {
         //Arrange
         var dbContext = DbHelper.CreateDbContext();
         var tokenPairModel = new TokenPairModel(AccessToken, RefreshToken);
         var singInModel = new SingInModel(FirstUserLogin, Password);
         var expected = new Result<TokenPairModel>().WithValue(tokenPairModel);
-        
-        var role = new RoleEntity
+        var roleEntities = roles.Select(x => new RoleEntity
         {
-            Id = Guid.Parse(UserRoleId),
-            Role = Role.User
-        };        
-        var roleAdmin = new RoleEntity
-        {
-            Id = Guid.Parse(AdminRoleId),
-            Role = Role.Admin
-        };
+            Id = Guid.NewGuid(),
+            Role = x
+        }).ToList();
 
+        var userRoles = roleEntities.Select(x => new UserRoleEntity
+    {
+        Id = Guid.NewGuid(),
+        RoleId = x.Id,
+        UserId = Guid.Parse(UserId)
+    }).ToList();
+    
         var user = new UserEntity
         {
             Id = Guid.Parse(UserId),
             Login = FirstUserLogin,
             LoginNormalized = FirstUserLogin.ToLower(),
             PasswordHash = PasswordHelper.GeneratePasswordHash(Password),
-            UserRoles = new List<UserRoleEntity>{new()
-            {
-                Id = Guid.NewGuid(),
-                RoleId = role.Id,
-            },new()
-                {
-                    Id = Guid.NewGuid(),
-                    RoleId = roleAdmin.Id
-                }
-            }
+            UserRoles = userRoles
         };
-        dbContext.Roles.Add(role);
-        dbContext.Roles.Add(roleAdmin);
+        dbContext.Roles.AddRange(roleEntities);
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        _tokenService.GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Contains(Role.User) 
-            && x.Count == 2), _ct)
+        _tokenService.GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Intersect(roles).Count() == roles.Count()
+            && x.Count == roles.Count()), _ct)
             .Returns(Task.FromResult(tokenPairModel));
 
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
         
         //Act
         var actual = await userService.SingInAsync(singInModel, _ct);
 
         //Assert
         await _tokenService.Received(1)
-            .GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Contains(Role.User)
-            && x.Count == 2), _ct);
+            .GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Intersect(roles).Count() == roles.Count()
+                && x.Count == roles.Count()), _ct);
         Assert.Equivalent(expected, actual);
     }
-    
     
     public async Task ShouldNotSingInAsync()
     {
