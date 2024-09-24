@@ -366,6 +366,8 @@ public class UserServiceUnitTests
         var actual = await userService.SingInAsync(singInModel, _ct);
 
         //Assert
+        _tokenService.Received(1)
+            .GenerateTokenPairAsync(Arg.Any<Guid>(), Arg.Any<IReadOnlyCollection<Role>>(), _ct);
         Assert.Equivalent(expected, actual);
     }
 }
