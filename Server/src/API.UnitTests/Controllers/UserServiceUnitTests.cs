@@ -26,6 +26,7 @@ public class UserServiceUnitTests
 
     private const string AccessToken = "accessToken";
     private const string RefreshToken = "refreshToken";
+    private const string RecoveryToken = "recoveryToken";
 
     private const string Email = "john@email.com";
     private const int Age = 30;
@@ -35,7 +36,6 @@ public class UserServiceUnitTests
     private const string NewPassword = "00000";
     private const string UserId = "21C31E4D-2953-450A-91B1-7C4FAC9743C2";
     private const string UserRoleId = "6DBB3F20-3F06-4076-8E9E-8170228276E0";
-    private const string AdminRoleId = "530A960B-0D95-41EF-897C-262CC53DE439";
 
     public UserServiceUnitTests()
     {
@@ -649,5 +649,34 @@ public class UserServiceUnitTests
 
         //Assert
         Assert.Equal(expected, actual.ParamName);
+    }
+
+    [Fact]
+    public async Task ShouldSendRecoveryEmailAsync()
+    {
+        //Assert
+        var expected = Result.Ok();
+        var user = new UserEntity
+        {
+            Id = Guid.NewGuid(),
+            Email = Email,
+            EmailNormalized = Email.ToLower()
+        };
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        
+        _tokenService.GenerateRecoveryToken(user.Id).Returns(RecoveryToken);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.SendRecoveryEmailAsync(Email, _ct);
+
+        //Assert
+        _tokenService.Received(1)
+            .GenerateRecoveryToken(user.Id);
+        _emailService.Received(1)
+            .SendRecoveryEmail(Email, RecoveryToken, _ct);
+        Assert.Equivalent(expected, actual);
     }
 }
