@@ -422,4 +422,69 @@ public class UserServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
+
+    [Fact]
+    public async Task ShouldGetUsersAsync()
+    {
+        //Arrange
+        var role = new RoleEntity
+        {
+            Id = Guid.NewGuid(),
+            Role = Role.User
+        };
+
+        var firstUser = new UserEntity
+        {
+            Id = Guid.NewGuid(),
+            FirstName = FirstName,
+            LastName = LastName,
+            Login = FirstUserLogin,
+            UserRoles = new List<UserRoleEntity>
+            {
+                new()
+                {
+                    RoleId = role.Id
+                }
+            }
+        };
+        var secondUser = new UserEntity
+        {
+            FirstName = FirstName,
+            LastName = LastName,
+            Login = SecondUserLogin,
+            UserRoles = new List<UserRoleEntity>
+            {
+                new()
+                {
+                    RoleId = role.Id
+                }
+            }
+        };
+
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Add(role);
+        dbContext.Add(firstUser);
+        dbContext.Add(secondUser);
+        await dbContext.SaveChangesAsync(_ct);
+
+        var expected = new List<UserModel>
+        {
+            new(
+                firstUser.Id, firstUser.FirstName, firstUser.LastName, firstUser.Login,
+                firstUser.UserRoles.Select(x => x.Role.Role).ToList()
+            ),
+            new(
+                secondUser.Id, secondUser.FirstName, secondUser.LastName, secondUser.Login,
+                secondUser.UserRoles.Select(x => x.Role.Role).ToList()
+            )
+        };
+        
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+
+        //Act
+        var actual = userService.GetUsersAsync(_ct);
+
+        //Assert
+        Assert.Equivalent(expected, actual.Result);
+    }
 }
