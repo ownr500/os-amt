@@ -612,4 +612,23 @@ public class UserServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
+
+    [Fact]
+    public async Task ShouldGetUserIdFromContext()
+    {
+        //Arrane
+        var expected = Guid.Parse(UserId);
+        
+        var userClaims = new List<Claim> { new(ClaimTypes.NameIdentifier, UserId) };
+        _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
+
+        var dbContext = DbHelper.CreateDbContext();
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+
+        //Act
+        var actual = userService.GetUserIdFromContext();
+
+        //Assert
+        Assert.Equal(expected, actual);
+    }
 }
