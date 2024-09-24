@@ -548,4 +548,38 @@ public class UserServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
+
+    [Fact]
+    public async Task ShouldRemoveRoleAsync()
+    {
+        //Arrange
+        var expected = Result.Ok();
+        
+        var user = new UserEntity
+        {
+            Id = Guid.NewGuid(),
+            UserRoles = new List<UserRoleEntity>
+            {
+                new()
+                {
+                   RoleId = RoleConstants.UserRoleId
+                }
+            }
+        };
+
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.RemoveRoleAsync(user.Id, Role.User, _ct);
+
+        //Assert
+        await _tokenService.Received(1)
+            .RevokeTokensAsync(user.Id, _ct);
+
+        Assert.False(dbContext.UserRoles.Any(x => x.UserId == user.Id && x.RoleId == RoleConstants.UserRoleId));
+        Assert.Equivalent(expected, actual);
+    }
 }
