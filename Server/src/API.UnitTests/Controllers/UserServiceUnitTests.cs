@@ -20,10 +20,10 @@ public class UserServiceUnitTests
     private readonly IEmailService _emailService;
     private readonly IHttpContextAccessor _contextAccessor;
     private readonly CancellationToken _ct = CancellationToken.None;
-    
+
     private const string FirstUserLogin = "FirstUserLogin";
     private const string SecondUserLogin = "SecondUserLogin";
-    
+
     private const string AccessToken = "accessToken";
     private const string RefreshToken = "refreshToken";
 
@@ -36,7 +36,7 @@ public class UserServiceUnitTests
     private const string UserId = "21C31E4D-2953-450A-91B1-7C4FAC9743C2";
     private const string UserRoleId = "6DBB3F20-3F06-4076-8E9E-8170228276E0";
     private const string AdminRoleId = "530A960B-0D95-41EF-897C-262CC53DE439";
-    
+
     public UserServiceUnitTests()
     {
         _tokenService = Substitute.For<ITokenService>();
@@ -52,18 +52,18 @@ public class UserServiceUnitTests
         {
             LoginNormalized = FirstUserLogin.ToLower(),
         };
-        
+
         var secondUser = new UserEntity
         {
             LoginNormalized = SecondUserLogin.ToLower(),
         };
-        
+
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(firstUser);
         dbContext.Users.Add(secondUser);
         await dbContext.SaveChangesAsync(_ct);
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.DeleteAsync(FirstUserLogin.ToUpper(), _ct);
 
@@ -74,15 +74,15 @@ public class UserServiceUnitTests
         Assert.Equal(true, secondUserExists);
         Assert.Equal(true, actual.IsSuccess);
     }
-    
-    
+
+
     [Fact]
     public async Task ShouldNotDeleteAsync()
     {
         //Arrange
         var errorMessage = MessageConstants.UserNotFound;
         var errors = new List<string> { errorMessage };
-        var expectedResult = new Result().WithErrors(errors); 
+        var expectedResult = new Result().WithErrors(errors);
         var firstUser = new UserEntity
         {
             LoginNormalized = FirstUserLogin.ToLower(),
@@ -92,7 +92,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(firstUser);
         await dbContext.SaveChangesAsync(_ct);
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.DeleteAsync(SecondUserLogin.ToUpper(), _ct);
 
@@ -112,10 +112,10 @@ public class UserServiceUnitTests
         var registerModel = new RegisterModel(FirstName, LastName, Email, Age, FirstUserLogin, Password);
         var expected = Result.Ok();
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.RegisterAsync(registerModel, _ct);
-        
+
         //Assert
         var userCreated = dbContext.Users.Any(x => x.LoginNormalized == FirstUserLogin.ToLower());
         Assert.Equal(true, userCreated);
@@ -132,14 +132,15 @@ public class UserServiceUnitTests
 
         //Act
         var actual = await userService.RegisterAsync(registerModel, _ct);
-        
+
         //Assert
-        var user = await dbContext.Users.Include(x => x.UserRoles).FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
+        var user = await dbContext.Users.Include(x => x.UserRoles)
+            .FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
         var a = user.UserRoles.First(x => x.RoleId == RoleConstants.UserRoleId);
         Assert.Equal(RoleConstants.UserRoleId, a.RoleId);
         Assert.Equivalent(Result.Ok(), actual);
     }
-    
+
     [Fact]
     public async Task ShouldNotRegisterAsync()
     {
@@ -152,16 +153,16 @@ public class UserServiceUnitTests
 
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        
+
         var registerModel = new RegisterModel(FirstName, LastName, Email, Age, FirstUserLogin, Password);
         var errorMessage = MessageConstants.UserAlreadyRegistered;
         var errors = new List<string> { errorMessage };
         var expected = new Result().WithErrors(errors);
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.RegisterAsync(registerModel, _ct);
-        
+
         //Assert
         var userExists = dbContext.Users.Any(x => x.LoginNormalized == FirstUserLogin.ToLower());
         Assert.Equal(true, userExists);
@@ -175,11 +176,11 @@ public class UserServiceUnitTests
         var updatedFirstName = "Michael";
         var updatedLastName = "Smith";
         var model = new UpdateFirstLastNameModel(updatedFirstName, updatedLastName);
-        
+
         var userId = Guid.Parse("E5608234-8E55-4122-95AC-6FC514CB5BA0");
         var userClaims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) };
         _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
-        
+
         var user = new UserEntity
         {
             Id = userId,
@@ -190,9 +191,9 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        
+
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.UpdateFirstLastNameAsync(model, _ct);
 
@@ -214,12 +215,12 @@ public class UserServiceUnitTests
         var errorMessage = MessageConstants.UserNotFound;
         var errors = new List<string> { errorMessage };
         var expected = new Result().WithErrors(errors);
-        
+
         var firstUserId = Guid.Parse("E5608234-8E55-4122-95AC-6FC514CB5BA0");
         var secondUserId = Guid.Parse("8753F409-C9AD-4525-9A64-C252719E386F");
         var userClaims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, secondUserId.ToString()) };
         _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
-        
+
         var firstUser = new UserEntity
         {
             Id = firstUserId,
@@ -227,13 +228,13 @@ public class UserServiceUnitTests
             FirstName = FirstName,
             LastName = LastName
         };
-        
+
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(firstUser);
         await dbContext.SaveChangesAsync(_ct);
-        
+
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.UpdateFirstLastNameAsync(model, _ct);
 
@@ -257,9 +258,9 @@ public class UserServiceUnitTests
         };
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        
+
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.PasswordChangeAsync(model, _ct);
 
@@ -285,14 +286,15 @@ public class UserServiceUnitTests
         };
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        
+
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.PasswordChangeAsync(model, _ct);
 
         //Assert
-        var userUpdated = await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == SecondUserLogin.ToLower(), _ct);
+        var userUpdated =
+            await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == SecondUserLogin.ToLower(), _ct);
         Assert.Equal(true, userUpdated is null);
         Assert.Equivalent(expected, actual);
     }
@@ -313,21 +315,22 @@ public class UserServiceUnitTests
         };
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        
+
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.PasswordChangeAsync(model, _ct);
 
         //Assert
-        var userUpdated = await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
+        var userUpdated =
+            await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
         Assert.Equal(PasswordHelper.GeneratePasswordHash(Password), userUpdated.PasswordHash);
         Assert.Equivalent(expected, actual);
     }
 
     [Theory]
-    [InlineData(new [] {Role.User})]
-    [InlineData(new [] {Role.User, Role.Admin})]
+    [InlineData(new[] { Role.User })]
+    [InlineData(new[] { Role.User, Role.Admin })]
     public async Task ShouldSingInAsync(Role[] roles)
     {
         //Arrange
@@ -342,15 +345,14 @@ public class UserServiceUnitTests
         }).ToList();
 
         var userRoles = roleEntities.Select(x => new UserRoleEntity
-    {
-        Id = Guid.NewGuid(),
-        RoleId = x.Id,
-        UserId = Guid.Parse(UserId)
-    }).ToList();
-    
+        {
+            Id = Guid.NewGuid(),
+            RoleId = x.Id
+        }).ToList();
+
         var user = new UserEntity
         {
-            Id = Guid.Parse(UserId),
+            Id = Guid.NewGuid(),
             Login = FirstUserLogin,
             LoginNormalized = FirstUserLogin.ToLower(),
             PasswordHash = PasswordHelper.GeneratePasswordHash(Password),
@@ -360,22 +362,24 @@ public class UserServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        _tokenService.GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Intersect(roles).Count() == roles.Count()
-            && x.Count == roles.Count()), _ct)
+        _tokenService.GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x =>
+                x.Intersect(roles).Count() == roles.Count()
+                && x.Count == roles.Count()), _ct)
             .Returns(Task.FromResult(tokenPairModel));
 
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
+
         //Act
         var actual = await userService.SingInAsync(singInModel, _ct);
 
         //Assert
         await _tokenService.Received(1)
-            .GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Intersect(roles).Count() == roles.Count()
+            .GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x =>
+                x.Intersect(roles).Count() == roles.Count()
                 && x.Count == roles.Count()), _ct);
         Assert.Equivalent(expected, actual);
     }
-    
+
     public async Task ShouldNotSingInAsync()
     {
         //Arrange
@@ -383,7 +387,7 @@ public class UserServiceUnitTests
         var tokenPairModel = new TokenPairModel(AccessToken, RefreshToken);
         var singInModel = new SingInModel(FirstUserLogin, Password);
         var expected = new Result<TokenPairModel>().WithValue(tokenPairModel);
-        
+
         var role = new RoleEntity
         {
             Id = Guid.Parse(UserRoleId),
@@ -396,23 +400,27 @@ public class UserServiceUnitTests
             Login = FirstUserLogin,
             LoginNormalized = FirstUserLogin.ToLower(),
             PasswordHash = PasswordHelper.GeneratePasswordHash(Password),
-            UserRoles = new List<UserRoleEntity>{new()
+            UserRoles = new List<UserRoleEntity>
             {
-                Id = Guid.NewGuid(),
-                RoleId = role.Id,
-                UserId = Guid.Parse(UserId)
-            }}
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    RoleId = role.Id,
+                    UserId = Guid.Parse(UserId)
+                }
+            }
         };
         dbContext.Roles.Add(role);
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        _tokenService.GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Contains(Role.User)), _ct)
+        _tokenService
+            .GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Contains(Role.User)), _ct)
             .Returns(Task.FromResult(tokenPairModel));
 
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-        
-        
+
+
         //Act
         var actual = await userService.SingInAsync(singInModel, _ct);
 
