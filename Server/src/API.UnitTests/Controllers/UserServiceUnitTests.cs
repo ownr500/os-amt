@@ -631,4 +631,23 @@ public class UserServiceUnitTests
         //Assert
         Assert.Equal(expected, actual);
     }
+    
+    [Fact]
+    public async Task ShouldNotGetUserIdFromContext()
+    {
+        //Arrane
+        var expected = "NameIdentifier";
+
+        var userClaims = new List<Claim>();
+        _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
+
+        var dbContext = DbHelper.CreateDbContext();
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+
+        //Act
+        var actual = Assert.Throws<ArgumentNullException>(() => userService.GetUserIdFromContext());
+
+        //Assert
+        Assert.Equal(expected, actual.ParamName);
+    }
 }
