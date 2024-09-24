@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using API.Constants;
 using API.Core.Entities;
+using API.Core.Enums;
 using API.Core.Models;
 using API.Core.Services;
 using API.Implementation.Services;
@@ -21,6 +22,9 @@ public class UserServiceUnitTests
     
     private const string FirstUserLogin = "FirstUserLogin";
     private const string SecondUserLogin = "SecondUserLogin";
+    
+    private const string AccessToken = "accessToken";
+    private const string RefreshToken = "refreshToken";
 
     private const string Email = "john@email.com";
     private const int Age = 30;
@@ -28,7 +32,8 @@ public class UserServiceUnitTests
     private const string LastName = "Doe";
     private const string Password = "12345";
     private const string NewPassword = "00000";
-    
+    private const string UserId = "21C31E4D-2953-450A-91B1-7C4FAC9743C2";
+    private const string UserRoleId = "6DBB3F20-3F06-4076-8E9E-8170228276E0";
     
 
     public UserServiceUnitTests()
@@ -316,6 +321,51 @@ public class UserServiceUnitTests
         //Assert
         var userUpdated = await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
         Assert.Equal(PasswordHelper.GeneratePasswordHash(Password), userUpdated.PasswordHash);
+        Assert.Equivalent(expected, actual);
+    }
+
+    [Fact]
+    public async Task ShouldSingInAsync()
+    {
+        //Arrange
+        var dbContext = DbHelper.CreateDbContext();
+        var tokenPairModel = new TokenPairModel(AccessToken, RefreshToken);
+        var singInModel = new SingInModel(FirstUserLogin, Password);
+        var expected = new Result<TokenPairModel>().WithValue(tokenPairModel);
+        
+        var role = new RoleEntity
+        {
+            Id = Guid.Parse(UserRoleId),
+            Role = Role.User
+        };
+
+        var user = new UserEntity
+        {
+            Id = Guid.Parse(UserId),
+            Login = FirstUserLogin,
+            LoginNormalized = FirstUserLogin.ToLower(),
+            PasswordHash = PasswordHelper.GeneratePasswordHash(Password),
+            UserRoles = new List<UserRoleEntity>{new()
+            {
+                Id = Guid.NewGuid(),
+                RoleId = role.Id,
+                UserId = Guid.Parse(UserId)
+            }}
+        };
+        dbContext.Roles.Add(role);
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+
+        _tokenService.GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Contains(Role.User)), _ct)
+            .Returns(Task.FromResult(tokenPairModel));
+
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        
+        //Act
+        var actual = await userService.SingInAsync(singInModel, _ct);
+
+        //Assert
         Assert.Equivalent(expected, actual);
     }
 }
