@@ -542,6 +542,9 @@ public class UserServiceUnitTests
         var actual = await userService.AddRoleAsync(user.Id, Role.User, _ct);
 
         //Assert
+        await _tokenService.Received(0)
+            .RevokeTokensAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
