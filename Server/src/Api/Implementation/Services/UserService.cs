@@ -111,7 +111,7 @@ public class UserService : IUserService
         if (model is null) return Result.Fail(MessageConstants.InvalidCredentials);
 
         var tokenModel = await _tokenService.GenerateTokenPairAsync(model.userId, model.userRoles, ct);
-
+        
         return Result.Ok(new TokenPairModel(
             tokenModel.AccessToken,
             tokenModel.RefreshToken

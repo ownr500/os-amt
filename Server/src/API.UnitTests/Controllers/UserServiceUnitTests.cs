@@ -34,6 +34,7 @@ public class UserServiceUnitTests
     private const string NewPassword = "00000";
     private const string UserId = "21C31E4D-2953-450A-91B1-7C4FAC9743C2";
     private const string UserRoleId = "6DBB3F20-3F06-4076-8E9E-8170228276E0";
+    private const string AdminRoleId = "530A960B-0D95-41EF-897C-262CC53DE439";
     
 
     public UserServiceUnitTests()
@@ -326,6 +327,65 @@ public class UserServiceUnitTests
 
     [Fact]
     public async Task ShouldSingInAsync()
+    {
+        //Arrange
+        var dbContext = DbHelper.CreateDbContext();
+        var tokenPairModel = new TokenPairModel(AccessToken, RefreshToken);
+        var singInModel = new SingInModel(FirstUserLogin, Password);
+        var expected = new Result<TokenPairModel>().WithValue(tokenPairModel);
+        
+        var role = new RoleEntity
+        {
+            Id = Guid.Parse(UserRoleId),
+            Role = Role.User
+        };        
+        var roleAdmin = new RoleEntity
+        {
+            Id = Guid.Parse(AdminRoleId),
+            Role = Role.Admin
+        };
+
+        var user = new UserEntity
+        {
+            Id = Guid.Parse(UserId),
+            Login = FirstUserLogin,
+            LoginNormalized = FirstUserLogin.ToLower(),
+            PasswordHash = PasswordHelper.GeneratePasswordHash(Password),
+            UserRoles = new List<UserRoleEntity>{new()
+            {
+                Id = Guid.NewGuid(),
+                RoleId = role.Id,
+            },new()
+                {
+                    Id = Guid.NewGuid(),
+                    RoleId = roleAdmin.Id
+                }
+            }
+        };
+        dbContext.Roles.Add(role);
+        dbContext.Roles.Add(roleAdmin);
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+
+        _tokenService.GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Contains(Role.User) 
+            && x.Count == 2), _ct)
+            .Returns(Task.FromResult(tokenPairModel));
+
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        
+        //Act
+        var actual = await userService.SingInAsync(singInModel, _ct);
+
+        //Assert
+        await _tokenService.Received(1)
+            .GenerateTokenPairAsync(user.Id, Arg.Is<IReadOnlyCollection<Role>>(x => x.Contains(Role.User)
+            && x.Count == 2), _ct);
+        Assert.Equivalent(expected, actual);
+    }
+    
+    
+    public async Task ShouldNotSingInAsync()
     {
         //Arrange
         var dbContext = DbHelper.CreateDbContext();
