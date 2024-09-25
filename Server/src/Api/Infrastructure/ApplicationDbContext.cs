@@ -56,7 +56,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<UserRoleEntity>().HasData(
             new UserRoleEntity
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.Parse("7c8a2d3d-b820-4fa9-8dc8-b8c25b6c65fe"),
                 UserId = Guid.Parse("561BBFAA-C44A-45F9-97C4-7182BA38B85F"),
                 RoleId = RoleConstants.AdminRoleId
             }
