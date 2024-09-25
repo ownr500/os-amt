@@ -1,4 +1,5 @@
 ﻿using API.Infrastructure;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.UnitTests.Helpers;
@@ -21,5 +22,20 @@ public class DbHelper
         return dbContext;
     }
     
+    public static ApplicationDbContext CreateSqLiteDbContext()
+    {
+        var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
+        builder.UseSqlite(new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = ":memory:" }.ToString()));
+
+        var dbContextOptions = builder.Options;
+        var dbContext = new ApplicationDbContext(dbContextOptions);
+        
+        dbContext.Database.OpenConnection();
+        dbContext.Database.EnsureCreated();
+        dbContext.SaveChanges();
+        
+        return dbContext;
+    }
+
     //todo helpers add user, role
 }

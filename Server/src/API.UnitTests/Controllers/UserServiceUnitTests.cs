@@ -593,10 +593,12 @@ public class UserServiceUnitTests
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
+            Email = Email,
+            EmailNormalized = Email.ToLower(),
             UserRoles = new List<UserRoleEntity>()
         };
 
-        var dbContext = DbHelper.CreateDbContext();
+        var dbContext = DbHelper.CreateSqLiteDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
@@ -678,5 +680,12 @@ public class UserServiceUnitTests
         _emailService.Received(1)
             .SendRecoveryEmail(Email, RecoveryToken, _ct);
         Assert.Equivalent(expected, actual);
+    }
+
+    [Fact]
+    public async Task ShouldValidateTokenAndChangePasswordAsync()
+    {
+        // _tokenService.ValidateRecoveryTokenAsync(RecoveryToken, _ct)
+            // .Returns();
     }
 }
