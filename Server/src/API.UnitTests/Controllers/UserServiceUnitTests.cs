@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using API.Constants;
 using API.Core.Entities;
 using API.Core.Enums;
@@ -36,6 +35,7 @@ public class UserServiceUnitTests
     private const string NewPassword = "00000";
     private const string UserId = "21C31E4D-2953-450A-91B1-7C4FAC9743C2";
     private const string UserRoleId = "6DBB3F20-3F06-4076-8E9E-8170228276E0";
+    private const int RecoveryTokenLifeTimeInMinutes = 15;
 
     public UserServiceUnitTests()
     {
@@ -685,7 +685,35 @@ public class UserServiceUnitTests
     [Fact]
     public async Task ShouldValidateTokenAndChangePasswordAsync()
     {
-        // _tokenService.ValidateRecoveryTokenAsync(RecoveryToken, _ct)
-            // .Returns();
+        //Arrange
+        var expected = Result.Ok();
+        var model = new RecoveryTokenModel(Guid.Parse(UserId), DateTime.UtcNow.AddMinutes(RecoveryTokenLifeTimeInMinutes));
+        _tokenService.ValidateRecoveryTokenAsync(RecoveryToken, _ct).Returns(model);
+
+        var dbContext = DbHelper.CreateSqLiteDbContext();
+        var user = new UserEntity
+        {
+            Email = Email,
+            EmailNormalized = Email.ToLower(),
+            PasswordHash = PasswordHelper.GeneratePasswordHash(Password)
+        };
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.ValidateTokenAndChangePasswordAsync(RecoveryToken, NewPassword, _ct);
+
+        //Assert
+        await _tokenService.Received(1)
+            .ValidateRecoveryTokenAsync(RecoveryToken, _ct);
+        await _tokenService.Received(1)
+            .AddRecoveryTokenAsync(RecoveryToken, model.ExpireAt, _ct);
+        
+        var updatedUser = dbContext.Users.FirstAsync(x => x.EmailNormalized == Email.ToLower(), _ct);
+        Assert.Equal(PasswordHelper.GeneratePasswordHash(NewPassword), user.PasswordHash);
+        Assert.Equivalent(expected, actual);
     }
 }
