@@ -593,8 +593,6 @@ public class UserServiceUnitTests
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
-            Email = Email,
-            EmailNormalized = Email.ToLower(),
             UserRoles = new List<UserRoleEntity>()
         };
 
