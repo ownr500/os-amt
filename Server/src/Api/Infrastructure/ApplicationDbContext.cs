@@ -47,6 +47,8 @@ public class ApplicationDbContext : DbContext
                 FirstName = "Admin",
                 LastName = "Admin",
                 LoginNormalized = "admin",
+                Email = "admin@5994471abb01112afcc181.com",
+                EmailNormalized = "admin@5994471abb01112afcc181.com",
                 PasswordHash = "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
             }
         );
