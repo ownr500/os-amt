@@ -693,6 +693,7 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateSqLiteDbContext();
         var user = new UserEntity
         {
+            Id = Guid.Parse(UserId),
             Email = Email,
             EmailNormalized = Email.ToLower(),
             PasswordHash = PasswordHelper.GeneratePasswordHash(Password)
@@ -700,6 +701,7 @@ public class UserServiceUnitTests
 
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
+        dbContext.ChangeTracker.Clear();
 
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
         
@@ -712,8 +714,8 @@ public class UserServiceUnitTests
         await _tokenService.Received(1)
             .AddRecoveryTokenAsync(RecoveryToken, model.ExpireAt, _ct);
         
-        var updatedUser = dbContext.Users.FirstAsync(x => x.EmailNormalized == Email.ToLower(), _ct);
-        Assert.Equal(PasswordHelper.GeneratePasswordHash(NewPassword), user.PasswordHash);
+        var updatedUser = await dbContext.Users.FirstAsync(x => x.EmailNormalized == Email.ToLower(), _ct);
+        Assert.Equal(PasswordHelper.GeneratePasswordHash(NewPassword), updatedUser.PasswordHash);
         Assert.Equivalent(expected, actual);
     }
 }
