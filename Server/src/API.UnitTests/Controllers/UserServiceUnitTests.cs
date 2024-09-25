@@ -28,6 +28,7 @@ public class UserServiceUnitTests
     private const string RecoveryToken = "recoveryToken";
 
     private const string Email = "john@email.com";
+    private const string AnotherEmail = "anotherjohn@email.com";
     private const int Age = 30;
     private const string FirstName = "John";
     private const string LastName = "Doe";
@@ -679,7 +680,35 @@ public class UserServiceUnitTests
             .SendRecoveryEmail(Email, RecoveryToken, _ct);
         Assert.Equivalent(expected, actual);
     }
+    
+    [Fact]
+    public async Task ShouldNotSendRecoveryEmailAsync()
+    {
+        //Assert
+        var expected = Result.Ok();
+        var user = new UserEntity
+        {
+            Id = Guid.NewGuid(),
+            Email = Email,
+            EmailNormalized = Email.ToLower()
+        };
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.SendRecoveryEmailAsync(AnotherEmail, _ct);
 
+        //Assert
+        _tokenService.Received(0)
+            .GenerateRecoveryToken(user.Id);
+        _emailService.Received(0)
+            .SendRecoveryEmail(Email, RecoveryToken, _ct);
+        Assert.Equivalent(expected, actual);
+    }
+    
     [Fact]
     public async Task ShouldValidateTokenAndChangePasswordAsync()
     {
