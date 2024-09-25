@@ -16,5 +16,5 @@ public interface IUserService
     Task<Result> RemoveRoleAsync(Guid userId, Role role, CancellationToken ct);
     Guid GetUserIdFromContext();
     Task<Result> SendRecoveryEmailAsync(string email, CancellationToken ct);
-    Task<Result> ValidateTokenAndChangePassword(string token, string newPassword, CancellationToken ct);
+    Task<Result> ValidateTokenAndChangePasswordAsync(string token, string newPassword, CancellationToken ct);
 }

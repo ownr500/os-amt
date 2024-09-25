@@ -187,7 +187,7 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result> ValidateTokenAndChangePassword(string token, string newPassword, CancellationToken ct)
+    public async Task<Result> ValidateTokenAndChangePasswordAsync(string token, string newPassword, CancellationToken ct)
     {
         var result = await _tokenService.ValidateRecoveryTokenAsync(token, ct);
         if (result.IsFailed) return Result.Fail(result.Errors);
