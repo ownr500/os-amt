@@ -637,7 +637,7 @@ public class UserServiceUnitTests
     public async Task ShouldNotGetUserIdFromContext()
     {
         //Arrane
-        var expected = ClaimTypes.NameIdentifier;
+        var expected = nameof(ClaimTypes.NameIdentifier);
 
         var userClaims = new List<Claim>();
         _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
