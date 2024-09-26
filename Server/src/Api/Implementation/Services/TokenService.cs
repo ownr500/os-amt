@@ -21,16 +21,19 @@ public class TokenService : ITokenService
 {
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly ApplicationDbContext _dbContext;
+    private readonly IJwtSecurityTokenProvider _jwtSecurityTokenProvider;
     private readonly TokenOptions _options;
 
     public TokenService(
         JwtSecurityTokenHandler tokenHandler,
         ApplicationDbContext dbContext,
-        IOptions<TokenOptions> options
+        IOptions<TokenOptions> options,
+        IJwtSecurityTokenProvider jwtSecurityTokenProvider
     )
     {
         _tokenHandler = tokenHandler;
         _dbContext = dbContext;
+        _jwtSecurityTokenProvider = jwtSecurityTokenProvider;
         _options = options.Value;
     }
 
@@ -209,16 +212,7 @@ public class TokenService : ITokenService
     private GeneratedTokenModel GenerateToken(GenerateTokenModel model)
     {
         var expireAt = DateTime.UtcNow.AddMinutes(model.TokenInfo.LifeTimeInMinutes);
-        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(model.TokenInfo.SecretKey));
-        var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
-        var options = new JwtSecurityToken(
-            model.TokenInfo.Issuer,
-            model.TokenInfo.Audience,
-            claims: model.Claims,
-            expires: expireAt,
-            signingCredentials: credentials
-        );
-        
+        var options = _jwtSecurityTokenProvider.Get(model, expireAt);
         return new GeneratedTokenModel(_tokenHandler.WriteToken(options), expireAt);
     }
 

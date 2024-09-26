@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using API.Configurations;
 using API.Core.Options;
 using API.Core.Services;
+using API.Implementation.Providers;
 using API.Implementation.Services;
 using API.Infrastructure;
 using API.Middleware;
@@ -18,6 +19,7 @@ internal static class ApplicationBuilderExtensions
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IJwtSecurityTokenProvider, JwtSecurityTokenProvider>();
         builder.Services.AddScoped<JwtSecurityTokenHandler>();
         builder.Services.AddScoped<RevokedTokenMiddleware>();
     }
