@@ -260,4 +260,12 @@ public class TokenServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
+
+    [Theory]
+    [InlineData(new[] {Role.User})]
+    [InlineData(new[] {Role.Admin, Role.User})]
+    public async Task ShouldGenerateTokenPairAsync(Role[] roles)
+    {
+        
+    }
 }
