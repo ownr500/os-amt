@@ -4,6 +4,7 @@ using API.Core.Entities;
 using API.Core.Enums;
 using API.Core.Models;
 using API.Core.Options;
+using API.Core.Services;
 using API.Implementation.Services;
 using API.UnitTests.Helpers;
 using FluentResults;
@@ -17,19 +18,22 @@ public class TokenServiceUnitTests
 {
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly IOptions<TokenOptions> _options;
+    private readonly IJwtSecurityTokenProvider _tokenProvider;
 
     private const string AccessToken = "accessToken";
     private const string NewAccessToken = "newAccessToken";
     private const string RefreshToken = "refreshToken";
     private const string NewRefreshToken = "newRefreshToken";
     private const string AnotherRefreshToken = "RefreshToken1";
-    private const string RecoveryToken = "recoveryToken";
+    private const string AudienceAccess = "Access";
+    private const string AudienceRefresh = "Refresh";
     private readonly CancellationToken _ct = CancellationToken.None;
     
     public TokenServiceUnitTests()
     {
         _tokenHandler = Substitute.For<JwtSecurityTokenHandler>();
         _options = Substitute.For<IOptions<TokenOptions>>();
+        _tokenProvider = Substitute.For<IJwtSecurityTokenProvider>();
     }
 
     [Fact]
@@ -97,7 +101,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -145,7 +149,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -195,7 +199,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -245,7 +249,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -266,6 +270,66 @@ public class TokenServiceUnitTests
     [InlineData(new[] {Role.Admin, Role.User})]
     public async Task ShouldGenerateTokenPairAsync(Role[] roles)
     {
+        //Arrange
+        var expected = new TokenPairModel(AccessToken, RefreshToken);
+
+        _options.Value.Returns(new TokenOptions
+        {
+            TokenInfos = new Dictionary<TokenType, TokenInfo>
+            {
+                {
+                    TokenType.Access, new TokenInfo
+                    {
+                        Audience = "Access",
+                        Issuer = "localhost",
+                        SecretKey = "secret",
+                        LifeTimeInMinutes = 15
+                    }
+                },
+                {
+                    TokenType.Refresh, new TokenInfo
+                    {
+                        Audience = "Refresh",
+                        Issuer = "localhost",
+                        SecretKey = "secret",
+                        LifeTimeInMinutes = 1440
+                    }
+                }
+            }
+        });
         
+        var user = new UserEntity
+        {
+            Id = Guid.NewGuid(),
+            UserRoles = roles.Select(x => new UserRoleEntity
+            {
+                RoleId = RoleConstants.RoleIds[x]
+            }).ToList()
+        };
+        var dbContext = DbHelper.CreateSqLiteDbContext();
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        dbContext.ChangeTracker.Clear();
+
+        _tokenHandler.WriteToken(Arg.Is<JwtSecurityToken>(x => x.Audiences.Contains(AudienceAccess)))
+            .Returns(AccessToken);
+        _tokenHandler.WriteToken(Arg.Is<JwtSecurityToken>(x => x.Audiences.Contains(AudienceRefresh)))
+            .Returns(RefreshToken);
+
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
+
+        //Act
+        var actual = await tokenService.GenerateTokenPairAsync(user.Id, roles, _ct);
+
+        //Assert
+        var token = await dbContext.Tokens.Where(x => x.User.Id == user.Id 
+                                                      && x.RefreshTokenActive
+                                                      && x.AccessToken == AccessToken
+                                                      && x.RefreshToken == RefreshToken)
+            .FirstOrDefaultAsync(_ct);
+        Assert.True(token is not null);
+        Assert.Equivalent(expected, actual);
+        // _tokenHandler.Received(1)
+        //     .WriteToken(Arg.Is<JwtSecurityToken>(x => ))
     }
 }
