@@ -745,4 +745,48 @@ public class UserServiceUnitTests
         Assert.Equal(PasswordHelper.GeneratePasswordHash(NewPassword), updatedUser.PasswordHash);
         Assert.Equivalent(expected, actual);
     }
+    
+    [Fact]
+    public async Task ShouldNotValidateTokenAndChangePasswordAsync()
+    {
+        //Arrange
+        var errors = new List<string>
+        {
+            "Error 1",
+            "Error 2"
+        };
+        
+        var model = Result.Fail(errors);
+        _tokenService.ValidateRecoveryTokenAsync(RecoveryToken, _ct).Returns(model);
+
+        var expected = Result.Fail(model.Errors);
+
+        var dbContext = DbHelper.CreateSqLiteDbContext();
+        var user = new UserEntity
+        {
+            Id = Guid.Parse(UserId),
+            Email = Email,
+            EmailNormalized = Email.ToLower(),
+            PasswordHash = PasswordHelper.GeneratePasswordHash(Password)
+        };
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+        dbContext.ChangeTracker.Clear();
+
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        
+        //Act
+        var actual = await userService.ValidateTokenAndChangePasswordAsync(RecoveryToken, NewPassword, _ct);
+
+        //Assert
+        await _tokenService.Received(1)
+            .ValidateRecoveryTokenAsync(RecoveryToken, _ct);
+        await _tokenService.Received(0)
+            .AddRecoveryTokenAsync(RecoveryToken, DateTime.UtcNow, _ct);
+        
+        var updatedUser = await dbContext.Users.FirstAsync(x => x.EmailNormalized == Email.ToLower(), _ct);
+        Assert.Equal(PasswordHelper.GeneratePasswordHash(Password), updatedUser.PasswordHash);
+        Assert.Equivalent(expected, actual);
+    }
 }
