@@ -22,6 +22,7 @@ public class TokenServiceUnitTests
     private const string NewAccessToken = "newAccessToken";
     private const string RefreshToken = "refreshToken";
     private const string NewRefreshToken = "newRefreshToken";
+    private const string AnotherRefreshToken = "RefreshToken1";
     private const string RecoveryToken = "recoveryToken";
     private readonly CancellationToken _ct = CancellationToken.None;
     
@@ -108,5 +109,55 @@ public class TokenServiceUnitTests
             .FirstOrDefaultAsync(_ct);
         Assert.False(refreshTokenActive);
         Assert.Equivalent(expected, actual);
+    }
+    
+    [Fact]
+    public async Task ShouldNotGenerateNewTokenFromRefreshTokenBecauseMissingTokenAsync()
+    {
+        //Arrange
+        var expected = Result.Fail(MessageConstants.InvalidRefreshToken);
+        
+        var user = new UserEntity
+        {
+            Id = Guid.NewGuid(),
+            UserRoles = new List<UserRoleEntity>
+            {
+                new()
+                {
+                    RoleId = RoleConstants.UserRoleId
+                }
+            }
+        };
+        
+        var token = new TokenEntity
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            AccessToken = AccessToken,
+            RefreshToken = AnotherRefreshToken,
+            RefreshTokenActive = true,
+            RefreshTokenExpireAt = DateTimeOffset.UtcNow.AddDays(1)
+        };
+
+        var dbContext = DbHelper.CreateDbContext();
+        dbContext.Users.Add(user);
+        dbContext.Tokens.Add(token);
+        await dbContext.SaveChangesAsync(_ct);
+        dbContext.ChangeTracker.Clear();
+
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options);
+
+        //Act
+        var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
+
+        //Assert
+        _tokenHandler.Received(0).WriteToken(Arg.Any<JwtSecurityToken>());
+        var refreshTokenActive = await dbContext.Tokens
+            .Where(x => x.Id == token.Id)
+            .Select(x => x.RefreshTokenActive)
+            .FirstOrDefaultAsync(_ct);
+        Assert.True(refreshTokenActive);
+        Assert.Equivalent(expected.IsFailed, actual.IsFailed);
+        Assert.Equivalent(expected.Errors, actual.Errors);
     }
 }
