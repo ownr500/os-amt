@@ -287,38 +287,26 @@ public class TokenServiceUnitTests
     }
 
     [Theory]
-    [InlineData(new[] {Role.User})]
-    [InlineData(new[] {Role.Admin, Role.User})]
+    [InlineData(new[] { Role.User })]
+    [InlineData(new[] { Role.Admin, Role.User })]
     public async Task ShouldGenerateTokenPairAsync(Role[] roles)
     {
         //Arrange
         var expected = new TokenPairModel(AccessToken, RefreshToken);
-
+        
         _options.Value.Returns(new TokenOptions
         {
             TokenInfos = new Dictionary<TokenType, TokenInfo>
             {
                 {
-                    TokenType.Access, new TokenInfo
-                    {
-                        Audience = "Access",
-                        Issuer = "localhost",
-                        SecretKey = "secret",
-                        LifeTimeInMinutes = 15
-                    }
+                    TokenType.Access, _accessTokenInfo
                 },
                 {
-                    TokenType.Refresh, new TokenInfo
-                    {
-                        Audience = "Refresh",
-                        Issuer = "localhost",
-                        SecretKey = "secret",
-                        LifeTimeInMinutes = 1440
-                    }
+                    TokenType.Refresh, _refreshTokenInfo
                 }
             }
         });
-        
+
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
@@ -331,26 +319,47 @@ public class TokenServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
+        
+        var accessOptions = new JwtSecurityToken();
+        _tokenProvider
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess),
+            _utcNow.DateTime.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
+        
+        var refreshOptions = new JwtSecurityToken();
+        _tokenProvider.Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
+                _utcNow.DateTime.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
 
-        _tokenHandler.WriteToken(Arg.Is<JwtSecurityToken>(x => x.Audiences.Contains(AudienceAccess)))
+        _tokenHandler.WriteToken(accessOptions)
             .Returns(AccessToken);
-        _tokenHandler.WriteToken(Arg.Is<JwtSecurityToken>(x => x.Audiences.Contains(AudienceRefresh)))
+        _tokenHandler.WriteToken(refreshOptions)
             .Returns(RefreshToken);
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateTokenPairAsync(user.Id, roles, _ct);
 
         //Assert
-        var token = await dbContext.Tokens.Where(x => x.User.Id == user.Id 
-                                                      && x.RefreshTokenActive
-                                                      && x.AccessToken == AccessToken
-                                                      && x.RefreshToken == RefreshToken)
-            .FirstOrDefaultAsync(_ct);
-        Assert.True(token is not null);
+        var tokenCreated = await dbContext.Tokens.AnyAsync(x => x.User.Id == user.Id
+                                                                    && x.RefreshTokenActive
+                                                                    && x.AccessToken == AccessToken
+                                                                    && x.RefreshToken == RefreshToken, _ct);
+
+        Assert.True(tokenCreated);
         Assert.Equivalent(expected, actual);
-        // _tokenHandler.Received(1)
-        //     .WriteToken(Arg.Is<JwtSecurityToken>(x => ))
+
+        _tokenProvider.Received(1)
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess),
+                _utcNow.DateTime.AddMinutes(_accessTokenInfo.LifeTimeInMinutes));
+        _tokenProvider.Received(1)
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
+                _utcNow.DateTime.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes));
+        
+        
+        
+        _tokenProvider.Received(1)
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess), Arg.Any<DateTime>());
+        _tokenHandler.Received(2)
+            .WriteToken(Arg.Any<JwtSecurityToken>());
     }
 }
