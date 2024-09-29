@@ -191,7 +191,7 @@ public class TokenServiceUnitTests
     {
         //Arrange
         var expected = Result.Fail(MessageConstants.InvalidRefreshToken);
-        
+
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
