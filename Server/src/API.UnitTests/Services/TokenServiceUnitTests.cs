@@ -25,6 +25,7 @@ public class TokenServiceUnitTests
     private const string AccessToken = "accessToken";
     private const string NewAccessToken = "newAccessToken";
     private const string RefreshToken = "refreshToken";
+    private const string RecoveryToken = "recoveryToken";
     private const string NewRefreshToken = "newRefreshToken";
     private const string AnotherRefreshToken = "RefreshToken1";
     private const string AudienceAccess = "Access";
@@ -357,5 +358,30 @@ public class TokenServiceUnitTests
             .WriteToken(accessOptions);
         _tokenHandler.Received(1)
             .WriteToken(refreshOptions);
+    }
+
+    [Fact]
+    public async Task ShouldGenerateRecoveryToken()
+    {
+        //Arrange
+        var expected = RecoveryToken;
+        
+        var user = new UserEntity
+        {
+            Id = Guid.NewGuid()
+        };
+
+        var dbContext = DbHelper.CreateSqLiteDbContext();
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(_ct);
+
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+
+        //Act
+        var actual = tokenService.GenerateRecoveryToken(user.Id);
+
+        //Assert
+        Assert.Equal(expected, actual);
+
     }
 }
