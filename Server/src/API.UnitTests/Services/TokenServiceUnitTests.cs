@@ -63,7 +63,7 @@ public class TokenServiceUnitTests
         //Arrange
         var tokenPairModel = new TokenPairModel(NewAccessToken, NewRefreshToken);
         var expected = Result.Ok(tokenPairModel);
-        
+
         _options.Value.Returns(new TokenOptions
         {
             TokenInfos = new Dictionary<TokenType, TokenInfo>
@@ -105,7 +105,7 @@ public class TokenServiceUnitTests
                 }
             }
         };
-        
+
         var token = new TokenEntity
         {
             Id = Guid.NewGuid(),
@@ -113,7 +113,7 @@ public class TokenServiceUnitTests
             AccessToken = AccessToken,
             RefreshToken = RefreshToken,
             RefreshTokenActive = true,
-            RefreshTokenExpireAt = DateTimeOffset.UtcNow.AddDays(1)
+            RefreshTokenExpireAt = _utcNow.AddMinutes(1440)
         };
 
         var dbContext = DbHelper.CreateDbContext();
@@ -122,7 +122,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -135,13 +135,13 @@ public class TokenServiceUnitTests
         Assert.False(refreshTokenActive);
         Assert.Equivalent(expected, actual);
     }
-    
+
     [Fact]
     public async Task ShouldNotGenerateNewTokenFromRefreshTokenBecauseMissingTokenAsync()
     {
         //Arrange
         var expected = Result.Fail(MessageConstants.InvalidRefreshToken);
-        
+
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
@@ -153,7 +153,7 @@ public class TokenServiceUnitTests
                 }
             }
         };
-        
+
         var token = new TokenEntity
         {
             Id = Guid.NewGuid(),
@@ -170,7 +170,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -185,8 +185,8 @@ public class TokenServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
-    
-        [Fact]
+
+    [Fact]
     public async Task ShouldNotGenerateNewTokenFromRefreshTokenBecauseRefreshTokenInactiveAsync()
     {
         //Arrange
@@ -203,7 +203,7 @@ public class TokenServiceUnitTests
                 }
             }
         };
-        
+
         var token = new TokenEntity
         {
             Id = Guid.NewGuid(),
@@ -220,7 +220,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -235,13 +235,13 @@ public class TokenServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
-    
+
     [Fact]
     public async Task ShouldNotGenerateNewTokenFromRefreshTokenBecauseRefreshExpiredAsync()
     {
         //Arrange
         var expected = Result.Fail(MessageConstants.InvalidRefreshToken);
-        
+
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
@@ -253,7 +253,7 @@ public class TokenServiceUnitTests
                 }
             }
         };
-        
+
         var token = new TokenEntity
         {
             Id = Guid.NewGuid(),
@@ -270,7 +270,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider);
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
