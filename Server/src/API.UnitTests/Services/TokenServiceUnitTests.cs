@@ -69,30 +69,28 @@ public class TokenServiceUnitTests
             TokenInfos = new Dictionary<TokenType, TokenInfo>
             {
                 {
-                    TokenType.Access, new TokenInfo
-                    {
-                        Audience = "Access",
-                        Issuer = "localhost",
-                        SecretKey = "secret",
-                        LifeTimeInMinutes = 15
-                    }
+                    TokenType.Access, _accessTokenInfo
                 },
                 {
-                    TokenType.Refresh, new TokenInfo
-                    {
-                        Audience = "Refresh",
-                        Issuer = "localhost",
-                        SecretKey = "secret",
-                        LifeTimeInMinutes = 1440
-                    }
+                    TokenType.Refresh, _refreshTokenInfo
+                    
                 }
             }
         });
 
-        _tokenHandler.WriteToken(Arg.Is<JwtSecurityToken>(x => x.Audiences.Contains("Access")))
-            .Returns("newAccessToken");
-        _tokenHandler.WriteToken(Arg.Is<JwtSecurityToken>(x => x.Audiences.Contains("Refresh")))
-            .Returns("newRefreshToken");
+        var accessOptions = new JwtSecurityToken();
+        _tokenProvider
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess),
+                _utcNow.DateTime.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
+        
+        var refreshOptions = new JwtSecurityToken();
+        _tokenProvider.Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
+            _utcNow.DateTime.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
+
+        _tokenHandler.WriteToken(accessOptions)
+            .Returns(NewAccessToken);
+        _tokenHandler.WriteToken(refreshOptions)
+            .Returns(NewRefreshToken);
 
         var user = new UserEntity
         {
@@ -113,7 +111,7 @@ public class TokenServiceUnitTests
             AccessToken = AccessToken,
             RefreshToken = RefreshToken,
             RefreshTokenActive = true,
-            RefreshTokenExpireAt = _utcNow.AddMinutes(1440)
+            RefreshTokenExpireAt = _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)
         };
 
         var dbContext = DbHelper.CreateDbContext();
