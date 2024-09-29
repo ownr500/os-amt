@@ -31,6 +31,22 @@ public class TokenServiceUnitTests
     private const string AudienceRefresh = "Refresh";
     private readonly DateTimeOffset _utcNow = DateTimeOffset.UtcNow;
     private readonly CancellationToken _ct = CancellationToken.None;
+
+    private readonly TokenInfo _accessTokenInfo = new()
+    {
+        Audience = "Access",
+        Issuer = "localhost",
+        SecretKey = "secret",
+        LifeTimeInMinutes = 15
+    };
+    
+    private readonly TokenInfo _refreshTokenInfo = new()
+    {
+        Audience = "Refresh",
+        Issuer = "localhost",
+        SecretKey = "secret",
+        LifeTimeInMinutes = 1440
+    };
     
     public TokenServiceUnitTests()
     {
