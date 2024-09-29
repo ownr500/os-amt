@@ -10,6 +10,7 @@ using API.Core.Services;
 using API.Extensions;
 using API.Infrastructure;
 using FluentResults;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -22,18 +23,21 @@ public class TokenService : ITokenService
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly ApplicationDbContext _dbContext;
     private readonly IJwtSecurityTokenProvider _jwtSecurityTokenProvider;
+    private readonly ISystemClock _systemClock;
     private readonly TokenOptions _options;
 
     public TokenService(
         JwtSecurityTokenHandler tokenHandler,
         ApplicationDbContext dbContext,
         IOptions<TokenOptions> options,
-        IJwtSecurityTokenProvider jwtSecurityTokenProvider
+        IJwtSecurityTokenProvider jwtSecurityTokenProvider,
+        ISystemClock systemClock
     )
     {
         _tokenHandler = tokenHandler;
         _dbContext = dbContext;
         _jwtSecurityTokenProvider = jwtSecurityTokenProvider;
+        _systemClock = systemClock;
         _options = options.Value;
     }
 
@@ -211,8 +215,8 @@ public class TokenService : ITokenService
 
     private GeneratedTokenModel GenerateToken(GenerateTokenModel model)
     {
-        var expireAt = DateTime.UtcNow.AddMinutes(model.TokenInfo.LifeTimeInMinutes);
-        var options = _jwtSecurityTokenProvider.Get(model, expireAt);
+        var expireAt = _systemClock.UtcNow.AddMinutes(model.TokenInfo.LifeTimeInMinutes);
+        var options = _jwtSecurityTokenProvider.Get(model, expireAt.DateTime);
         return new GeneratedTokenModel(_tokenHandler.WriteToken(options), expireAt);
     }
 
