@@ -354,12 +354,10 @@ public class TokenServiceUnitTests
         _tokenProvider.Received(1)
             .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
                 _utcNow.DateTime.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes));
-        
-        
-        
-        _tokenProvider.Received(1)
-            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess), Arg.Any<DateTime>());
-        _tokenHandler.Received(2)
-            .WriteToken(Arg.Any<JwtSecurityToken>());
+
+        _tokenHandler.Received(1)
+            .WriteToken(accessOptions);
+        _tokenHandler.Received(1)
+            .WriteToken(refreshOptions);
     }
 }
