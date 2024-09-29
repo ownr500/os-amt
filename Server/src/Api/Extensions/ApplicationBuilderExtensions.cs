@@ -6,6 +6,7 @@ using API.Implementation.Providers;
 using API.Implementation.Services;
 using API.Infrastructure;
 using API.Middleware;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Extensions;
@@ -22,6 +23,7 @@ internal static class ApplicationBuilderExtensions
         builder.Services.AddScoped<IJwtSecurityTokenProvider, JwtSecurityTokenProvider>();
         builder.Services.AddScoped<JwtSecurityTokenHandler>();
         builder.Services.AddScoped<RevokedTokenMiddleware>();
+        builder.Services.AddScoped<ISystemClock, SystemClock>();
     }
 
     public static void RegisterOptions(this WebApplicationBuilder builder)
