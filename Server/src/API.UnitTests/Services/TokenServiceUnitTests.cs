@@ -8,6 +8,7 @@ using API.Core.Services;
 using API.Implementation.Services;
 using API.UnitTests.Helpers;
 using FluentResults;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -19,6 +20,7 @@ public class TokenServiceUnitTests
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly IOptions<TokenOptions> _options;
     private readonly IJwtSecurityTokenProvider _tokenProvider;
+    private readonly ISystemClock _systemClock;
 
     private const string AccessToken = "accessToken";
     private const string NewAccessToken = "newAccessToken";
@@ -27,6 +29,7 @@ public class TokenServiceUnitTests
     private const string AnotherRefreshToken = "RefreshToken1";
     private const string AudienceAccess = "Access";
     private const string AudienceRefresh = "Refresh";
+    private readonly DateTimeOffset _utcNow = DateTimeOffset.UtcNow;
     private readonly CancellationToken _ct = CancellationToken.None;
     
     public TokenServiceUnitTests()
@@ -34,6 +37,8 @@ public class TokenServiceUnitTests
         _tokenHandler = Substitute.For<JwtSecurityTokenHandler>();
         _options = Substitute.For<IOptions<TokenOptions>>();
         _tokenProvider = Substitute.For<IJwtSecurityTokenProvider>();
+        _systemClock = Substitute.For<ISystemClock>();
+        _systemClock.UtcNow.Returns(_utcNow);
     }
 
     [Fact]
