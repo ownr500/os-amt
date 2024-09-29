@@ -38,7 +38,7 @@ public class TokenServiceUnitTests
         Audience = "Access",
         Issuer = "localhost",
         SecretKey = "secret",
-        LifeTimeInMinutes = 15
+        LifeTimeInMinutes = 60
     };
     
     private readonly TokenInfo _refreshTokenInfo = new()
@@ -47,6 +47,14 @@ public class TokenServiceUnitTests
         Issuer = "localhost",
         SecretKey = "secret",
         LifeTimeInMinutes = 1440
+    };
+
+    private readonly TokenInfo _recoveryTokenInfo = new()
+    {
+        Audience = "Recovery",
+        Issuer = "localhost",
+        SecretKey = "secret",
+        LifeTimeInMinutes = 15
     };
     
     public TokenServiceUnitTests()
@@ -375,6 +383,8 @@ public class TokenServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
+        var tokenModel = new GeneratedTokenModel(RecoveryToken, _utcNow);
+        
         var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
