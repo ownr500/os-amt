@@ -40,8 +40,7 @@ public class TokenService : ITokenService
         _systemClock = systemClock;
         _options = options.Value;
     }
-
-
+    
     public async Task<Result<TokenPairModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
         var model = await _dbContext.Tokens
@@ -127,7 +126,6 @@ public class TokenService : ITokenService
                 if (userIdClaim is null) throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
                 return Result.Ok(new RecoveryTokenModel(Guid.Parse(userIdClaim.Value), recoveryToken.ValidTo));
             }
-            
         }
         catch (SecurityTokenExpiredException exception)
         {
