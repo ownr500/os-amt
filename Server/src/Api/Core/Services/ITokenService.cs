@@ -2,6 +2,7 @@
 using API.Core.Models;
 using FluentResults;
 using Microsoft.Extensions.Primitives;
+using Microsoft.IdentityModel.Tokens;
 
 namespace API.Core.Services;
 
@@ -12,6 +13,7 @@ public interface ITokenService
     Task<bool> ValidateAuthHeader(StringValues header);
     Task RevokeTokensAsync(Guid userId, CancellationToken ct);
     string GenerateRecoveryToken(Guid userId);
-    Task<Result<RecoveryTokenModel>> ValidateRecoveryTokenAsync(string token, CancellationToken ct);
+    Result<RecoveryTokenModel> ValidateRecoveryToken(string token, CancellationToken ct);
     Task AddRecoveryTokenAsync(string token, DateTime valueExpireAt, CancellationToken ct);
+    Task<Result> CheckRecoveryTokenExists(string token, CancellationToken ct);
 }

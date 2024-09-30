@@ -715,7 +715,7 @@ public class UserServiceUnitTests
         //Arrange
         var expected = Result.Ok();
         var model = new RecoveryTokenModel(Guid.Parse(UserId), DateTime.UtcNow.AddMinutes(RecoveryTokenLifeTimeInMinutes));
-        _tokenService.ValidateRecoveryTokenAsync(RecoveryToken, _ct).Returns(model);
+        _tokenService.ValidateRecoveryToken(RecoveryToken, _ct).Returns(model);
 
         var dbContext = DbHelper.CreateSqLiteDbContext();
         var user = new UserEntity
@@ -737,7 +737,7 @@ public class UserServiceUnitTests
 
         //Assert
         await _tokenService.Received(1)
-            .ValidateRecoveryTokenAsync(RecoveryToken, _ct);
+            .ValidateRecoveryToken(RecoveryToken, _ct);
         await _tokenService.Received(1)
             .AddRecoveryTokenAsync(RecoveryToken, model.ExpireAt, _ct);
         
@@ -757,7 +757,7 @@ public class UserServiceUnitTests
         };
         
         var model = Result.Fail(errors);
-        _tokenService.ValidateRecoveryTokenAsync(RecoveryToken, _ct).Returns(model);
+        _tokenService.ValidateRecoveryToken(RecoveryToken, _ct).Returns(model);
 
         var expected = Result.Fail(model.Errors);
 
@@ -781,7 +781,7 @@ public class UserServiceUnitTests
 
         //Assert
         await _tokenService.Received(1)
-            .ValidateRecoveryTokenAsync(RecoveryToken, _ct);
+            .ValidateRecoveryToken(RecoveryToken, _ct);
         await _tokenService.Received(0)
             .AddRecoveryTokenAsync(RecoveryToken, DateTime.UtcNow, _ct);
         

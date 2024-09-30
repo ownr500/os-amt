@@ -98,7 +98,7 @@ public class TokenService : ITokenService
         return token.Token;
     }
 
-    public async Task<Result<RecoveryTokenModel>> ValidateRecoveryTokenAsync(string token, CancellationToken ct)
+    public Result<RecoveryTokenModel> ValidateRecoveryToken(string token, CancellationToken ct)
     {
         try
         {
@@ -116,16 +116,11 @@ public class TokenService : ITokenService
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenInfo.SecretKey)),
             }, out var recoveryToken);
             
-            var tokenExists = await _dbContext.RecoveryTokens
-                .AnyAsync(x => x.Token == token, ct);
-            if (!tokenExists)
-            {
-                var userIdClaim = claims.Claims
-                    .FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
+            var userIdClaim = claims.Claims
+                .FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
 
-                if (userIdClaim is null) throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
-                return Result.Ok(new RecoveryTokenModel(Guid.Parse(userIdClaim.Value), recoveryToken.ValidTo));
-            }
+            if (userIdClaim is null) throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
+            return Result.Ok(new RecoveryTokenModel(Guid.Parse(userIdClaim.Value), claims, recoveryToken.ValidTo));
         }
         catch (SecurityTokenExpiredException exception)
         {
@@ -136,8 +131,6 @@ public class TokenService : ITokenService
             Console.WriteLine(e.Message);
             return Result.Fail(MessageConstants.PasswordChangeFailed);
         }
-        
-        return Result.Fail(MessageConstants.InvalidRecoveryToken);
     }
 
     public async Task AddRecoveryTokenAsync(string token, DateTime valueExpireAt, CancellationToken ct)
@@ -151,6 +144,13 @@ public class TokenService : ITokenService
 
         await _dbContext.RecoveryTokens.AddAsync(recoveryToken, ct);
         await _dbContext.SaveChangesAsync(ct);
+    }
+
+    public async Task<Result> CheckRecoveryTokenExists(string token, CancellationToken ct)
+    {
+        var tokenExists = await _dbContext.RecoveryTokens
+            .AnyAsync(x => x.Token == token, ct);
+        return tokenExists ? Result.Fail(MessageConstants.InvalidRecoveryToken) : Result.Ok();
     }
 
     public async Task<bool> ValidateAuthHeader(StringValues header)
