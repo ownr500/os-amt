@@ -64,15 +64,7 @@ public class TokenServiceUnitTests
         _tokenProvider = Substitute.For<IJwtSecurityTokenProvider>();
         _systemClock = Substitute.For<ISystemClock>();
         _systemClock.UtcNow.Returns(_utcNow);
-    }
-
-    [Fact]
-    public async Task ShouldGenerateNewTokenFromRefreshTokenAsync()
-    {
-        //Arrange
-        var tokenPairModel = new TokenPairModel(NewAccessToken, NewRefreshToken);
-        var expected = Result.Ok(tokenPairModel);
-
+        
         _options.Value.Returns(new TokenOptions
         {
             TokenInfos = new Dictionary<TokenType, TokenInfo>
@@ -82,10 +74,17 @@ public class TokenServiceUnitTests
                 },
                 {
                     TokenType.Refresh, _refreshTokenInfo
-                    
                 }
             }
         });
+    }
+
+    [Fact]
+    public async Task ShouldGenerateNewTokenFromRefreshTokenAsync()
+    {
+        //Arrange
+        var tokenPairModel = new TokenPairModel(NewAccessToken, NewRefreshToken);
+        var expected = Result.Ok(tokenPairModel);
 
         var accessOptions = new JwtSecurityToken();
         _tokenProvider
@@ -301,19 +300,6 @@ public class TokenServiceUnitTests
         //Arrange
         var expected = new TokenPairModel(AccessToken, RefreshToken);
         
-        _options.Value.Returns(new TokenOptions
-        {
-            TokenInfos = new Dictionary<TokenType, TokenInfo>
-            {
-                {
-                    TokenType.Access, _accessTokenInfo
-                },
-                {
-                    TokenType.Refresh, _refreshTokenInfo
-                }
-            }
-        });
-
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
