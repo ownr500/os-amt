@@ -392,6 +392,31 @@ public class TokenServiceUnitTests
         _tokenHandler.Received(1)
             .WriteToken(recoveryOptions);
         Assert.Equal(expected, actual);
+    }
 
+    [Fact]
+    public void ShouldNotGenerateRecoveryToken()
+    {
+        //Arrange
+        var expected = nameof(_options.Value.TokenInfos);
+        
+        _options.Value.Returns(new TokenOptions
+        {
+            TokenInfos = new Dictionary<TokenType, TokenInfo>
+            {
+                {
+                    TokenType.Access, _accessTokenInfo
+                }
+            }
+        });
+
+        var userId = Guid.NewGuid();
+        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider, _systemClock);
+
+        //Act
+        var actual = Assert.Throws<ArgumentNullException>(() => tokenService.GenerateRecoveryToken(userId));
+
+        //Assert
+        Assert.Equal(expected, actual.ParamName);
     }
 }
