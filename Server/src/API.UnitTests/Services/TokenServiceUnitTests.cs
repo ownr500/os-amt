@@ -419,4 +419,10 @@ public class TokenServiceUnitTests
         //Assert
         Assert.Equal(expected, actual.ParamName);
     }
+
+    [Fact]
+    public async Task ShouldValidateRecoveryTokenAsync()
+    {
+        
+    }
 }
