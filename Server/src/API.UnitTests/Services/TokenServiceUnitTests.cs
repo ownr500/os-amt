@@ -372,15 +372,25 @@ public class TokenServiceUnitTests
         var dbContext = DbHelper.CreateSqLiteDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-
-        var tokenModel = new GeneratedTokenModel(RecoveryToken, _utcNow);
         
         var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
 
+        var recoveryOptions = new JwtSecurityToken();
+        var expireAt = _utcNow.AddMinutes(_recoveryTokenInfo.LifeTimeInMinutes);
+        _tokenProvider
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRecovery), expireAt.DateTime)
+            .Returns(recoveryOptions);
+
+        _tokenHandler.WriteToken(recoveryOptions).Returns(RecoveryToken);
+        
         //Act
         var actual = tokenService.GenerateRecoveryToken(user.Id);
 
         //Assert
+        _tokenProvider.Received(1)
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRecovery), expireAt.DateTime);
+        _tokenHandler.Received(1)
+            .WriteToken(recoveryOptions);
         Assert.Equal(expected, actual);
 
     }
