@@ -30,6 +30,7 @@ public class TokenServiceUnitTests
     private const string AnotherRefreshToken = "RefreshToken1";
     private const string AudienceAccess = "Access";
     private const string AudienceRefresh = "Refresh";
+    private const string AudienceRecovery = "Recovery";
     private readonly DateTimeOffset _utcNow = DateTimeOffset.UtcNow;
     private readonly CancellationToken _ct = CancellationToken.None;
 
@@ -74,6 +75,9 @@ public class TokenServiceUnitTests
                 },
                 {
                     TokenType.Refresh, _refreshTokenInfo
+                },
+                {
+                    TokenType.Recovery, _recoveryTokenInfo
                 }
             }
         });
