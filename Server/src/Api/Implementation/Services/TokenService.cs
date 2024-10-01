@@ -120,7 +120,7 @@ public class TokenService : ITokenService
                 .FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
 
             if (userIdClaim is null) throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
-            return Result.Ok(new RecoveryTokenModel(Guid.Parse(userIdClaim.Value), claims, recoveryToken.ValidTo));
+            return Result.Ok(new RecoveryTokenModel(Guid.Parse(userIdClaim.Value), recoveryToken.ValidTo));
         }
         catch (SecurityTokenExpiredException exception)
         {
