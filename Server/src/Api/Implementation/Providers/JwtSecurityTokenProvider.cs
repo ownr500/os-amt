@@ -16,7 +16,7 @@ public class JwtSecurityTokenProvider : IJwtSecurityTokenProvider
             model.TokenInfo.Issuer,
             model.TokenInfo.Audience,
             claims: model.Claims,
-            expires: expireAt,
+            expires: expireAt.ToLocalTime(),
             signingCredentials: credentials
         );
         return options;
