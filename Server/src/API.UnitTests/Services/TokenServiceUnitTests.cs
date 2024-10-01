@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 
-namespace API.UnitTests.Controllers;
+namespace API.UnitTests.Services;
 
 public class TokenServiceUnitTests
 {
