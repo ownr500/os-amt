@@ -615,7 +615,7 @@ public class UserServiceUnitTests
     }
 
     [Fact]
-    public async Task ShouldGetUserIdFromContext()
+    public void ShouldGetUserIdFromContext()
     {
         //Arrane
         var expected = Guid.Parse(UserId);
@@ -634,7 +634,7 @@ public class UserServiceUnitTests
     }
     
     [Fact]
-    public async Task ShouldNotGetUserIdFromContext()
+    public void ShouldNotGetUserIdFromContext()
     {
         //Arrane
         var expected = nameof(ClaimTypes.NameIdentifier);
