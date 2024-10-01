@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 
-namespace API.UnitTests.Controllers;
+namespace API.UnitTests.Services;
 
 public class UserServiceUnitTests
 {
@@ -714,9 +714,7 @@ public class UserServiceUnitTests
     {
         //Arrange
         var expected = Result.Ok();
-        var model = new RecoveryTokenModel(Guid.Parse(UserId), DateTime.UtcNow.AddMinutes(RecoveryTokenLifeTimeInMinutes));
-        _tokenService.ValidateRecoveryToken(RecoveryToken, _ct).Returns(model);
-
+        
         var dbContext = DbHelper.CreateSqLiteDbContext();
         var user = new UserEntity
         {
@@ -730,13 +728,17 @@ public class UserServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
+        var model = new RecoveryTokenModel(Guid.Parse(UserId), DateTime.UtcNow.AddMinutes(RecoveryTokenLifeTimeInMinutes));
+        _tokenService.ValidateRecoveryToken(RecoveryToken, _ct).Returns(model);
+        _tokenService.CheckRecoveryTokenExists(RecoveryToken, _ct).Returns(Result.Ok());
+
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
         
         //Act
         var actual = await userService.ValidateTokenAndChangePasswordAsync(RecoveryToken, NewPassword, _ct);
 
         //Assert
-        await _tokenService.Received(1)
+        _tokenService.Received(1)
             .ValidateRecoveryToken(RecoveryToken, _ct);
         await _tokenService.Received(1)
             .AddRecoveryTokenAsync(RecoveryToken, model.ExpireAt, _ct);
@@ -780,7 +782,7 @@ public class UserServiceUnitTests
         var actual = await userService.ValidateTokenAndChangePasswordAsync(RecoveryToken, NewPassword, _ct);
 
         //Assert
-        await _tokenService.Received(1)
+        _tokenService.Received(1)
             .ValidateRecoveryToken(RecoveryToken, _ct);
         await _tokenService.Received(0)
             .AddRecoveryTokenAsync(RecoveryToken, DateTime.UtcNow, _ct);
