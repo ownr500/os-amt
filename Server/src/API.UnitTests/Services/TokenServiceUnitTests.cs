@@ -1,6 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using API.Constants;
 using API.Core.Entities;
 using API.Core.Enums;
@@ -8,7 +7,6 @@ using API.Core.Models;
 using API.Core.Options;
 using API.Core.Services;
 using API.Implementation.Services;
-using API.Infrastructure;
 using API.UnitTests.Helpers;
 using FluentResults;
 using Microsoft.AspNetCore.Authentication;
@@ -35,7 +33,7 @@ public class TokenServiceUnitTests
     private const string AudienceAccess = "Access";
     private const string AudienceRefresh = "Refresh";
     private const string AudienceRecovery = "Recovery";
-    private readonly DateTimeOffset _utcNow = DateTimeOffset.UtcNow;
+    private readonly DateTimeOffset _utcNow = new(2024, 12, 1, 12, 20, 35, TimeSpan.Zero);
     private readonly CancellationToken _ct = CancellationToken.None;
 
     private readonly TokenInfo _accessTokenInfo = new()
@@ -97,11 +95,11 @@ public class TokenServiceUnitTests
         var accessOptions = new JwtSecurityToken();
         _tokenProvider
             .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess),
-                _utcNow.DateTime.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
+                _utcNow.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
         
         var refreshOptions = new JwtSecurityToken();
         _tokenProvider.Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
-            _utcNow.DateTime.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
+            _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
 
         _tokenHandler.WriteToken(accessOptions)
             .Returns(NewAccessToken);
@@ -324,11 +322,11 @@ public class TokenServiceUnitTests
         var accessOptions = new JwtSecurityToken();
         _tokenProvider
             .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess),
-            _utcNow.DateTime.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
+            _utcNow.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
         
         var refreshOptions = new JwtSecurityToken();
         _tokenProvider.Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
-                _utcNow.DateTime.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
+                _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
 
         _tokenHandler.WriteToken(accessOptions)
             .Returns(AccessToken);
@@ -351,10 +349,10 @@ public class TokenServiceUnitTests
 
         _tokenProvider.Received(1)
             .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess),
-                _utcNow.DateTime.AddMinutes(_accessTokenInfo.LifeTimeInMinutes));
+                _utcNow.AddMinutes(_accessTokenInfo.LifeTimeInMinutes));
         _tokenProvider.Received(1)
             .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
-                _utcNow.DateTime.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes));
+                _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes));
 
         _tokenHandler.Received(1)
             .WriteToken(accessOptions);
@@ -429,27 +427,31 @@ public class TokenServiceUnitTests
     {
         //Arrange
         var expireAt = _utcNow.AddMinutes(_recoveryTokenInfo.LifeTimeInMinutes);
+        //todo resolve milliseconds problem
+        // expireAt = expireAt.AddMilliseconds(-expireAt.Millisecond);
+        // expireAt = expireAt.AddMicroseconds(-expireAt.Microsecond);
         var userId = Guid.NewGuid();
 
-        var userIdAndExpireModel = new UserIdAndExpireModel(userId, expireAt.DateTime);
+        var userIdAndExpireModel = new UserIdAndExpireModel(userId, expireAt);
         var expected = Result.Ok(userIdAndExpireModel);
 
-        var validationParams = new TokenValidationParameters
+        var claims = new ClaimsIdentity(new[]
         {
-            ValidAudience = _recoveryTokenInfo.Audience,
-            ValidIssuer = _recoveryTokenInfo.Issuer,
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_recoveryTokenInfo.SecretKey)),
-        };
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+        });
 
-        var userIdClaim = new Claim(ClaimTypes.NameIdentifier, userId.ToString());
-        var claimsIdentity = new ClaimsIdentity(new[] {userIdClaim});
+        var token = new JwtSecurityToken(expires: expireAt.UtcDateTime);
         
-        _tokenHandler.ValidateToken(RecoveryToken, validationParams, out SecurityToken recoveryToken)
-            .Returns(new ClaimsPrincipal(claimsIdentity));
+        _tokenHandler.ValidateToken(RecoveryToken, 
+                Arg.Is<TokenValidationParameters>(x => 
+                    x.ValidAudience == _recoveryTokenInfo.Audience
+                    && x.ValidIssuer == _recoveryTokenInfo.Issuer), 
+                out Arg.Any<SecurityToken>())
+            .Returns(x =>
+            {
+                x[2] = token;
+                return new ClaimsPrincipal(claims);
+            });
 
         var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
             _systemClock);
