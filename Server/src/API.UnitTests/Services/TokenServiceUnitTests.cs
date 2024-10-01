@@ -466,4 +466,30 @@ public class TokenServiceUnitTests
                 x => x.ValidAudience == _recoveryTokenInfo.Audience && x.ValidIssuer == _recoveryTokenInfo.Issuer
             ), out Arg.Any<SecurityToken>());
     }
+
+    [Fact]
+    public void ShouldNotValidateRecoveryTokenBecauseOptionsNotFound()
+    {
+        //Arrange
+        var expected = Result.Fail(MessageConstants.PasswordChangeFailed);;
+        
+        _options.Value.Returns(new TokenOptions
+        {
+            TokenInfos = new Dictionary<TokenType, TokenInfo>
+            {
+                {
+                    TokenType.Access, _accessTokenInfo
+                }
+            }
+        });
+        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+            _systemClock);
+
+        //Act
+        var actual = tokenService.ValidateRecoveryToken(RecoveryToken, _ct);
+
+        //Assert
+        Assert.Equivalent(expected.IsFailed, actual.IsFailed);
+        Assert.Equivalent(expected.Errors, actual.Errors);
+    }
 }
