@@ -8,7 +8,7 @@ namespace API.Implementation.Providers;
 
 public class JwtSecurityTokenProvider : IJwtSecurityTokenProvider
 {
-    public JwtSecurityToken Get(GenerateTokenModel model, DateTime expireAt)
+    public JwtSecurityToken Get(GenerateTokenModel model, DateTimeOffset expireAt)
     {
         var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(model.TokenInfo.SecretKey));
         var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
@@ -16,7 +16,7 @@ public class JwtSecurityTokenProvider : IJwtSecurityTokenProvider
             model.TokenInfo.Issuer,
             model.TokenInfo.Audience,
             claims: model.Claims,
-            expires: expireAt.ToLocalTime(),
+            expires: expireAt.UtcDateTime,
             signingCredentials: credentials
         );
         return options;

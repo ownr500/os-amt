@@ -133,12 +133,13 @@ public class TokenService : ITokenService
         }
     }
 
-    public async Task AddRecoveryTokenAsync(string token, DateTime valueExpireAt, CancellationToken ct)
+    public async Task AddRecoveryTokenAsync(string token, DateTimeOffset valueExpireAt, CancellationToken ct)
     {
+        //todo change to offset in db
         var recoveryToken = new RecoveryTokenEntity
         {
             Token = token,
-            ExpireAt = valueExpireAt,
+            ExpireAt = valueExpireAt.UtcDateTime,
             IsActive = true
         };
 
@@ -214,7 +215,7 @@ public class TokenService : ITokenService
     private GeneratedTokenModel GenerateToken(GenerateTokenModel model)
     {
         var expireAt = _systemClock.UtcNow.AddMinutes(model.TokenInfo.LifeTimeInMinutes);
-        var options = _jwtSecurityTokenProvider.Get(model, expireAt.DateTime);
+        var options = _jwtSecurityTokenProvider.Get(model, expireAt);
         return new GeneratedTokenModel(_tokenHandler.WriteToken(options), expireAt);
     }
 

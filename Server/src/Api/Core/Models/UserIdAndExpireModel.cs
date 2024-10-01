@@ -4,4 +4,4 @@ namespace API.Core.Models;
 
 public record UserIdAndExpireModel(
     Guid UserId,
-    DateTime ExpireAt);
+    DateTimeOffset ExpireAt);

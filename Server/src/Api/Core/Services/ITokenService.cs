@@ -14,6 +14,6 @@ public interface ITokenService
     Task RevokeTokensAsync(Guid userId, CancellationToken ct);
     string GenerateRecoveryToken(Guid userId);
     Result<UserIdAndExpireModel> ValidateRecoveryToken(string token, CancellationToken ct);
-    Task AddRecoveryTokenAsync(string token, DateTime valueExpireAt, CancellationToken ct);
+    Task AddRecoveryTokenAsync(string token, DateTimeOffset valueExpireAt, CancellationToken ct);
     Task<Result> CheckRecoveryTokenExists(string token, CancellationToken ct);
 }

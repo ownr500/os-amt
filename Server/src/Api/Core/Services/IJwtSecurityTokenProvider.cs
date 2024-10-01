@@ -5,5 +5,5 @@ namespace API.Core.Services;
 
 public interface IJwtSecurityTokenProvider
 {
-    JwtSecurityToken Get(GenerateTokenModel model, DateTime expireAt);
+    JwtSecurityToken Get(GenerateTokenModel model, DateTimeOffset expireAt);
 }
