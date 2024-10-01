@@ -1,4 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using API.Constants;
 using API.Core.Entities;
 using API.Core.Enums;
@@ -6,11 +8,13 @@ using API.Core.Models;
 using API.Core.Options;
 using API.Core.Services;
 using API.Implementation.Services;
+using API.Infrastructure;
 using API.UnitTests.Helpers;
 using FluentResults;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 
 namespace API.UnitTests.Services;
@@ -421,8 +425,39 @@ public class TokenServiceUnitTests
     }
 
     [Fact]
-    public async Task ShouldValidateRecoveryTokenAsync()
+    public void ShouldValidateRecoveryToken()
     {
+        //Arrange
+        var expireAt = _utcNow.AddMinutes(_recoveryTokenInfo.LifeTimeInMinutes);
+        var userId = Guid.NewGuid();
+
+        var userIdAndExpireModel = new UserIdAndExpireModel(userId, expireAt.DateTime);
+        var expected = Result.Ok(userIdAndExpireModel);
+
+        var validationParams = new TokenValidationParameters
+        {
+            ValidAudience = _recoveryTokenInfo.Audience,
+            ValidIssuer = _recoveryTokenInfo.Issuer,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_recoveryTokenInfo.SecretKey)),
+        };
+
+        var userIdClaim = new Claim(ClaimTypes.NameIdentifier, userId.ToString());
+        var claimsIdentity = new ClaimsIdentity(new[] {userIdClaim});
         
+        _tokenHandler.ValidateToken(RecoveryToken, validationParams, out SecurityToken recoveryToken)
+            .Returns(new ClaimsPrincipal(claimsIdentity));
+
+        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+            _systemClock);
+
+        //Act
+        var actual = tokenService.ValidateRecoveryToken(RecoveryToken, _ct);
+        
+        //Assert
+        Assert.Equivalent(expected, actual);
     }
 }
