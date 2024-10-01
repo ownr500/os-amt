@@ -728,7 +728,7 @@ public class UserServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var model = new RecoveryTokenModel(Guid.Parse(UserId), DateTime.UtcNow.AddMinutes(RecoveryTokenLifeTimeInMinutes));
+        var model = new UserIdAndExpireModel(Guid.Parse(UserId), DateTime.UtcNow.AddMinutes(RecoveryTokenLifeTimeInMinutes));
         _tokenService.ValidateRecoveryToken(RecoveryToken, _ct).Returns(model);
         _tokenService.CheckRecoveryTokenExists(RecoveryToken, _ct).Returns(Result.Ok());
 

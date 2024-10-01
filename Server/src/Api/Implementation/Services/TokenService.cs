@@ -98,7 +98,7 @@ public class TokenService : ITokenService
         return token.Token;
     }
 
-    public Result<RecoveryTokenModel> ValidateRecoveryToken(string token, CancellationToken ct)
+    public Result<UserIdAndExpireModel> ValidateRecoveryToken(string token, CancellationToken ct)
     {
         try
         {
@@ -120,7 +120,7 @@ public class TokenService : ITokenService
                 .FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
 
             if (userIdClaim is null) throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
-            return Result.Ok(new RecoveryTokenModel(Guid.Parse(userIdClaim.Value), recoveryToken.ValidTo));
+            return Result.Ok(new UserIdAndExpireModel(Guid.Parse(userIdClaim.Value), recoveryToken.ValidTo));
         }
         catch (SecurityTokenExpiredException exception)
         {

@@ -2,6 +2,6 @@
 
 namespace API.Core.Models;
 
-public record RecoveryTokenModel(
+public record UserIdAndExpireModel(
     Guid UserId,
     DateTime ExpireAt);
