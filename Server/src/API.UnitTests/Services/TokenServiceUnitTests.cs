@@ -461,5 +461,9 @@ public class TokenServiceUnitTests
         
         //Assert
         Assert.Equivalent(expected, actual);
+        _tokenHandler.Received(1)
+            .ValidateToken(RecoveryToken, Arg.Is<TokenValidationParameters>(
+                x => x.ValidAudience == _recoveryTokenInfo.Audience && x.ValidIssuer == _recoveryTokenInfo.Issuer
+            ), out Arg.Any<SecurityToken>());
     }
 }
