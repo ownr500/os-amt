@@ -139,8 +139,7 @@ public class TokenService : ITokenService
         var recoveryToken = new RecoveryTokenEntity
         {
             Token = token,
-            ExpireAt = valueExpireAt.UtcDateTime,
-            IsActive = true
+            ExpireAt = valueExpireAt.UtcDateTime
         };
 
         await _dbContext.RecoveryTokens.AddAsync(recoveryToken, ct);
@@ -152,6 +151,11 @@ public class TokenService : ITokenService
         var tokenExists = await _dbContext.RecoveryTokens
             .AnyAsync(x => x.Token == token, ct);
         return tokenExists ? Result.Fail(MessageConstants.InvalidRecoveryToken) : Result.Ok();
+    }
+
+    public Task RemoveExpiredTokens(CancellationToken ct)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<bool> ValidateAuthHeader(StringValues header)
