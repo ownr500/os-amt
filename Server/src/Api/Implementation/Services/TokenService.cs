@@ -176,11 +176,6 @@ public class TokenService : ITokenService
                     {
                         Token = x.AccessToken,
                         TokenExpireAt = x.AccessTokenExpireAt
-                    },
-                    new()
-                    {
-                        Token = x.RefreshToken,
-                        TokenExpireAt = x.RefreshTokenExpireAt
                     }
                 }
             )
