@@ -517,4 +517,29 @@ public class TokenServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
+    
+    [Fact]
+    public void ShouldNotValidateRecoveryTokenBecauseTokenExpired()
+    {
+        // Arrange
+        var expected = Result.Fail(MessageConstants.TokenExpired);
+        
+        _tokenHandler.ValidateToken(RecoveryToken, Arg.Is<TokenValidationParameters>(
+                x => x.ValidAudience == _recoveryTokenInfo.Audience
+                     && x.ValidIssuer == _recoveryTokenInfo.Issuer), out Arg.Any<SecurityToken>())
+            .Returns(x =>
+            {
+                throw new SecurityTokenExpiredException();
+            });
+
+        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+            _systemClock);
+        
+        //Act
+        var actual = tokenService.ValidateRecoveryToken(RecoveryToken, _ct);
+
+        //Assert
+        Assert.Equivalent(expected.IsFailed, actual.IsFailed);
+        Assert.Equivalent(expected.Errors, actual.Errors);
+    }
 }
