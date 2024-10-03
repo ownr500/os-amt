@@ -152,7 +152,7 @@ public class TokenService : ITokenService
         return tokenExists ? Result.Fail(MessageConstants.InvalidRecoveryToken) : Result.Ok();
     }
 
-    public async Task RemoveExpiredTokens(CancellationToken ct)
+    public async Task RemoveExpiredTokensAsync(CancellationToken ct)
     {
         var expiredRecoveryTokens = _dbContext.RecoveryTokens.Where(x => x.ExpireAt < _systemClock.UtcNow);
         var expiredRevokedTokens = _dbContext.RevokedTokens.Where(x => x.TokenExpireAt < _systemClock.UtcNow);
