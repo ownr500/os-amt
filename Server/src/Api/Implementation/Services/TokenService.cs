@@ -153,9 +153,17 @@ public class TokenService : ITokenService
         return tokenExists ? Result.Fail(MessageConstants.InvalidRecoveryToken) : Result.Ok();
     }
 
-    public Task RemoveExpiredTokens(CancellationToken ct)
+    public async Task RemoveExpiredTokens(CancellationToken ct)
     {
-        throw new NotImplementedException();
+        var expiredRecoveryTokens = _dbContext.RecoveryTokens.Where(x => x.ExpireAt < _systemClock.UtcNow);
+        var expiredRevokedTokens = _dbContext.RevokedTokens.Where(x => x.TokenExpireAt < _systemClock.UtcNow);
+        var expiredTokens = _dbContext.Tokens.Where(x => x.RefreshTokenExpireAt < _systemClock.UtcNow);
+        
+        _dbContext.RecoveryTokens.RemoveRange(expiredRecoveryTokens);
+        _dbContext.RevokedTokens.RemoveRange(expiredRevokedTokens);
+        _dbContext.Tokens.RemoveRange(expiredTokens);
+
+        await _dbContext.SaveChangesAsync(ct);
     }
 
     public async Task<bool> ValidateAuthHeader(StringValues header)
