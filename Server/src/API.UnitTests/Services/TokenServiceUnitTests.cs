@@ -542,4 +542,30 @@ public class TokenServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
+
+    [Fact]
+    public void ShouldNotValidateRecoveryTokenBecauseExceptionIsThrown()
+    {
+        //Arrange
+        var expected = Result.Fail(MessageConstants.PasswordChangeFailed);
+        _options.Value.Returns(new TokenOptions
+        {
+            TokenInfos = new Dictionary<TokenType, TokenInfo>
+            {
+                {
+                    TokenType.Access, _accessTokenInfo
+                }
+            }
+        });
+
+        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+            _systemClock);
+
+        //Act
+        var actual = tokenService.ValidateRecoveryToken(RecoveryToken, _ct);
+
+        //Assert
+        Assert.Equivalent(expected.IsFailed, actual.IsFailed);
+        Assert.Equivalent(expected.Errors, actual.Errors);
+    }
 }
