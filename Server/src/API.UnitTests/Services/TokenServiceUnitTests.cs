@@ -43,7 +43,7 @@ public class TokenServiceUnitTests
         SecretKey = "secret",
         LifeTimeInMinutes = 60
     };
-    
+
     private readonly TokenInfo _refreshTokenInfo = new()
     {
         Audience = "Refresh",
@@ -59,7 +59,7 @@ public class TokenServiceUnitTests
         SecretKey = "secret",
         LifeTimeInMinutes = 15
     };
-    
+
     public TokenServiceUnitTests()
     {
         _tokenHandler = Substitute.For<JwtSecurityTokenHandler>();
@@ -67,7 +67,7 @@ public class TokenServiceUnitTests
         _tokenProvider = Substitute.For<IJwtSecurityTokenProvider>();
         _systemClock = Substitute.For<ISystemClock>();
         _systemClock.UtcNow.Returns(_utcNow);
-        
+
         _options.Value.Returns(new TokenOptions
         {
             TokenInfos = new Dictionary<TokenType, TokenInfo>
@@ -96,7 +96,7 @@ public class TokenServiceUnitTests
         _tokenProvider
             .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess),
                 _utcNow.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
-        
+
         var refreshOptions = new JwtSecurityToken();
         _tokenProvider.Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
             _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
@@ -305,7 +305,7 @@ public class TokenServiceUnitTests
     {
         //Arrange
         var expected = new TokenPairModel(AccessToken, RefreshToken);
-        
+
         var user = new UserEntity
         {
             Id = Guid.NewGuid(),
@@ -318,15 +318,15 @@ public class TokenServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
-        
+
         var accessOptions = new JwtSecurityToken();
         _tokenProvider
             .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceAccess),
-            _utcNow.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
-        
+                _utcNow.AddMinutes(_accessTokenInfo.LifeTimeInMinutes)).Returns(accessOptions);
+
         var refreshOptions = new JwtSecurityToken();
         _tokenProvider.Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRefresh),
-                _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
+            _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)).Returns(refreshOptions);
 
         _tokenHandler.WriteToken(accessOptions)
             .Returns(AccessToken);
@@ -340,9 +340,9 @@ public class TokenServiceUnitTests
 
         //Assert
         var tokenCreated = await dbContext.Tokens.AnyAsync(x => x.User.Id == user.Id
-                                                                    && x.RefreshTokenActive
-                                                                    && x.AccessToken == AccessToken
-                                                                    && x.RefreshToken == RefreshToken, _ct);
+                                                                && x.RefreshTokenActive
+                                                                && x.AccessToken == AccessToken
+                                                                && x.RefreshToken == RefreshToken, _ct);
 
         Assert.True(tokenCreated);
         Assert.Equivalent(expected, actual);
@@ -365,7 +365,7 @@ public class TokenServiceUnitTests
     {
         //Arrange
         var expected = RecoveryToken;
-        
+
         var user = new UserEntity
         {
             Id = Guid.NewGuid()
@@ -374,7 +374,7 @@ public class TokenServiceUnitTests
         var dbContext = DbHelper.CreateSqLiteDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        
+
         var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
 
         var recoveryOptions = new JwtSecurityToken();
@@ -384,7 +384,7 @@ public class TokenServiceUnitTests
             .Returns(recoveryOptions);
 
         _tokenHandler.WriteToken(recoveryOptions).Returns(RecoveryToken);
-        
+
         //Act
         var actual = tokenService.GenerateRecoveryToken(user.Id);
 
@@ -401,7 +401,7 @@ public class TokenServiceUnitTests
     {
         //Arrange
         var expected = nameof(_options.Value.TokenInfos);
-        
+
         _options.Value.Returns(new TokenOptions
         {
             TokenInfos = new Dictionary<TokenType, TokenInfo>
@@ -413,7 +413,8 @@ public class TokenServiceUnitTests
         });
 
         var userId = Guid.NewGuid();
-        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider, _systemClock);
+        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+            _systemClock);
 
         //Act
         var actual = Assert.Throws<ArgumentNullException>(() => tokenService.GenerateRecoveryToken(userId));
@@ -441,11 +442,11 @@ public class TokenServiceUnitTests
         });
 
         var token = new JwtSecurityToken(expires: expireAt.UtcDateTime);
-        
-        _tokenHandler.ValidateToken(RecoveryToken, 
-                Arg.Is<TokenValidationParameters>(x => 
+
+        _tokenHandler.ValidateToken(RecoveryToken,
+                Arg.Is<TokenValidationParameters>(x =>
                     x.ValidAudience == _recoveryTokenInfo.Audience
-                    && x.ValidIssuer == _recoveryTokenInfo.Issuer), 
+                    && x.ValidIssuer == _recoveryTokenInfo.Issuer),
                 out Arg.Any<SecurityToken>())
             .Returns(x =>
             {
@@ -458,7 +459,7 @@ public class TokenServiceUnitTests
 
         //Act
         var actual = tokenService.ValidateRecoveryToken(RecoveryToken, _ct);
-        
+
         //Assert
         Assert.Equivalent(expected, actual);
         _tokenHandler.Received(1)
@@ -471,8 +472,9 @@ public class TokenServiceUnitTests
     public void ShouldNotValidateRecoveryTokenBecauseOptionsNotFound()
     {
         //Arrange
-        var expected = Result.Fail(MessageConstants.PasswordChangeFailed);;
-        
+        var expected = Result.Fail(MessageConstants.PasswordChangeFailed);
+        ;
+
         _options.Value.Returns(new TokenOptions
         {
             TokenInfos = new Dictionary<TokenType, TokenInfo>
@@ -485,6 +487,29 @@ public class TokenServiceUnitTests
         var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
             _systemClock);
 
+        //Act
+        var actual = tokenService.ValidateRecoveryToken(RecoveryToken, _ct);
+
+        //Assert
+        Assert.Equivalent(expected.IsFailed, actual.IsFailed);
+        Assert.Equivalent(expected.Errors, actual.Errors);
+    }
+
+    [Fact]
+    public void ShouldNotValidateRecoveryTokenBecauseClaimsNotFound()
+    {
+        // Arrange
+        var expected = Result.Fail(MessageConstants.PasswordChangeFailed);
+        var claims = new ClaimsIdentity();
+
+        _tokenHandler.ValidateToken(RecoveryToken, Arg.Is<TokenValidationParameters>(
+                x => x.ValidAudience == _recoveryTokenInfo.Audience
+                     && x.ValidIssuer == _recoveryTokenInfo.Issuer), out Arg.Any<SecurityToken>())
+            .Returns(new ClaimsPrincipal(claims));
+
+        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+            _systemClock);
+        
         //Act
         var actual = tokenService.ValidateRecoveryToken(RecoveryToken, _ct);
 
