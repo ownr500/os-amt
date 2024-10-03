@@ -135,11 +135,10 @@ public class TokenService : ITokenService
 
     public async Task AddRecoveryTokenAsync(string token, DateTimeOffset valueExpireAt, CancellationToken ct)
     {
-        //todo change to offset in db
         var recoveryToken = new RecoveryTokenEntity
         {
             Token = token,
-            ExpireAt = valueExpireAt.UtcDateTime
+            ExpireAt = valueExpireAt
         };
 
         await _dbContext.RecoveryTokens.AddAsync(recoveryToken, ct);
