@@ -8,6 +8,7 @@ using API.Core.Options;
 using API.Core.Services;
 using API.Implementation.Services;
 using API.UnitTests.Helpers;
+using AutoFixture;
 using FluentResults;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,7 @@ public class TokenServiceUnitTests
     private const string AudienceAccess = "Access";
     private const string AudienceRefresh = "Refresh";
     private const string AudienceRecovery = "Recovery";
-    private readonly DateTimeOffset _utcNow = new(2024, 12, 1, 12, 20, 35, TimeSpan.Zero);
+    private readonly DateTimeOffset _utcNow = new(2024, 12, 1, 12, 20, 35, TimeZoneInfo.Utc.BaseUtcOffset);
     private readonly CancellationToken _ct = CancellationToken.None;
 
     private readonly TokenInfo _accessTokenInfo = new()
@@ -567,5 +568,95 @@ public class TokenServiceUnitTests
         //Assert
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
+    }
+
+    [Fact]
+    public async Task ShouldRemoveExpiredTokensAsync()
+    {
+        //Arrange
+        _systemClock.UtcNow.Returns(_utcNow.DateTime);
+
+        var expireNow = _utcNow.AddMinutes(-15);
+        var expireIn15Minutes = _utcNow.AddMinutes(15);
+
+        var user = new UserEntity
+        {
+            Id = Guid.NewGuid()
+        };
+
+        var revokedTokensList = new Fixture()
+            .Build<RevokedTokenEntity>()
+            .With(x => x.TokenExpireAt, expireNow)
+            .CreateMany(3);
+
+        var recoveryTokensList = new Fixture()
+            .Build<RecoveryTokenEntity>()
+            .With(x => x.ExpireAt, expireNow)
+            .CreateMany(3);
+
+        var tokensList = new Fixture()
+            .Build<TokenEntity>()
+            .With(x => x.UserId, user.Id)
+            .With(x => x.User, user)
+            .With(x => x.RefreshTokenExpireAt, expireNow)
+            .CreateMany(3);
+
+        var revokedToken = new Fixture()
+            .Build<RevokedTokenEntity>()
+            .With(x => x.TokenExpireAt, expireIn15Minutes)
+            .Create();
+
+        var recoveryToken = new Fixture()
+            .Build<RecoveryTokenEntity>()
+            .With(x => x.ExpireAt, expireIn15Minutes)
+            .Create();
+
+        var token = new Fixture()
+            .Build<TokenEntity>()
+            .With(x => x.UserId, user.Id)
+            .With(x => x.User, user)
+            .With(x => x.RefreshTokenExpireAt, expireIn15Minutes)
+            .Create();
+
+        
+        var dbContext = DbHelper.CreateSqLiteDbContext();
+
+        dbContext.Users.Add(user);
+        
+        dbContext.RevokedTokens.AddRange(revokedTokensList);
+        dbContext.RevokedTokens.Add(revokedToken);
+        
+        dbContext.RecoveryTokens.AddRange(recoveryTokensList);
+        dbContext.RecoveryTokens.Add(recoveryToken);
+        
+        dbContext.Tokens.AddRange(tokensList);
+        dbContext.Tokens.Add(token);
+        
+        await dbContext.SaveChangesAsync(_ct);
+        dbContext.ChangeTracker.Clear();
+        
+        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+
+        //Act
+        await tokenService.RemoveExpiredTokensAsync(_ct);
+
+        //Assert
+        var shouldHaveOneRecoveryTokenLeft =await dbContext.RecoveryTokens.CountAsync(_ct);
+        var shouldHaveOneRevokedTokenLeft = await dbContext.RevokedTokens.CountAsync(_ct);
+        var shouldHaveOneTokenLeft = await dbContext.Tokens.CountAsync(_ct);
+        Assert.Equal(1, shouldHaveOneRecoveryTokenLeft);
+        Assert.Equal(1, shouldHaveOneRevokedTokenLeft);
+        Assert.Equal(1, shouldHaveOneTokenLeft);
+
+        var shouldBeOurRecoveryToken = dbContext.RecoveryTokens
+            .Any(x => x.Id == recoveryToken.Id);
+        var shouldBeOurRevokedToken = dbContext.RevokedTokens
+            .Any(x => x.Id == revokedToken.Id);
+
+        var shouldBeOurToken = dbContext.Tokens
+            .Any(x => x.Id == token.Id);
+
+        var result = shouldBeOurToken && shouldBeOurRecoveryToken && shouldBeOurRevokedToken;
+        Assert.Equal(true, result);
     }
 }
