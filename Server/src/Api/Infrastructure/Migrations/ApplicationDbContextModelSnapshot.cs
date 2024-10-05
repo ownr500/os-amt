@@ -41,7 +41,7 @@ namespace API.Migrations
                     b.HasIndex("Token")
                         .IsUnique();
 
-                    b.ToTable("RecoveryTokens");
+                    b.ToTable("RecoveryTokens", (string)null);
                 });
 
             modelBuilder.Entity("API.Core.Entities.RevokedTokenEntity", b =>
@@ -63,7 +63,7 @@ namespace API.Migrations
                     b.HasIndex("Token")
                         .IsUnique();
 
-                    b.ToTable("RevokedTokens");
+                    b.ToTable("RevokedTokens", (string)null);
                 });
 
             modelBuilder.Entity("API.Core.Entities.RoleEntity", b =>
@@ -77,7 +77,7 @@ namespace API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
 
                     b.HasData(
                         new
@@ -133,7 +133,7 @@ namespace API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tokens");
+                    b.ToTable("Tokens", (string)null);
                 });
 
             modelBuilder.Entity("API.Core.Entities.UserEntity", b =>
@@ -188,7 +188,7 @@ namespace API.Migrations
                     b.HasIndex("LoginNormalized")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
 
                     b.HasData(
                         new
@@ -223,7 +223,7 @@ namespace API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserRoles");
+                    b.ToTable("UserRoles", (string)null);
 
                     b.HasData(
                         new
