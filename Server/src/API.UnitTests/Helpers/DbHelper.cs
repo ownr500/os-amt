@@ -22,13 +22,13 @@ public class DbHelper
         return dbContext;
     }
     
-    public static ApplicationDbContext CreateSqLiteDbContext()
+    public static TestDbContext CreateSqLiteDbContext()
     {
         var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
         builder.UseSqlite(new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = ":memory:" }.ToString()));
 
         var dbContextOptions = builder.Options;
-        var dbContext = new ApplicationDbContext(dbContextOptions);
+        var dbContext = new TestDbContext(dbContextOptions);
         
         dbContext.Database.OpenConnection();
         dbContext.Database.EnsureCreated();
