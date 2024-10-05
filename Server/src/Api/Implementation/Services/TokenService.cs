@@ -154,15 +154,10 @@ public class TokenService : ITokenService
 
     public async Task RemoveExpiredTokensAsync(CancellationToken ct)
     {
-        var expiredRecoveryTokens = _dbContext.RecoveryTokens.Where(x => x.ExpireAt < _systemClock.UtcNow);
-        var expiredRevokedTokens = _dbContext.RevokedTokens.Where(x => x.TokenExpireAt < _systemClock.UtcNow);
-        var expiredTokens = _dbContext.Tokens.Where(x => x.RefreshTokenExpireAt < _systemClock.UtcNow);
-        
-        _dbContext.RecoveryTokens.RemoveRange(expiredRecoveryTokens);
-        _dbContext.RevokedTokens.RemoveRange(expiredRevokedTokens);
-        _dbContext.Tokens.RemoveRange(expiredTokens);
-
-        await _dbContext.SaveChangesAsync(ct);
+        var utcNow = _systemClock.UtcNow;
+        await _dbContext.RecoveryTokens.Where(x => x.ExpireAt < utcNow).ExecuteDeleteAsync(ct);
+        await _dbContext.RevokedTokens.Where(x => x.TokenExpireAt < utcNow).ExecuteDeleteAsync(ct);
+        await _dbContext.Tokens.Where(x => x.RefreshTokenExpireAt < utcNow).ExecuteDeleteAsync(ct);
     }
 
     public async Task<bool> ValidateAuthHeader(StringValues header)
