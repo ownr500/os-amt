@@ -6,6 +6,7 @@ using API.Implementation.Providers;
 using API.Implementation.Services;
 using API.Infrastructure;
 using API.Middleware;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,5 +45,16 @@ internal static class ApplicationBuilderExtensions
         builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
         builder.Services.ConfigureOptions<ConfigureJwtBearerOptions>();
         builder.Services.ConfigureOptions<ConfigureAuthenticationOptions>();
+    }
+
+    public static void RegisterHangfire(this WebApplicationBuilder builder)
+    {
+        var connectionString = builder.Configuration.GetConnectionString("HangfireConnection");
+        builder.Services.AddHangfire(x =>
+            x.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseSqlServerStorage(connectionString));
+        builder.Services.AddHangfireServer();
     }
 }

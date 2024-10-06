@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using API.Extensions;
 using API.Middleware;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,7 @@ builder.RegisterConfigurationOptions();
 builder.RegisterServices();
 builder.RegisterOptions();
 builder.RegisterDbContext();
+builder.RegisterHangfire();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -30,5 +32,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<RevokedTokenMiddleware>();
 app.MapControllers();
+app.UseHangfireDashboard();
 
 await app.RunAsync();
