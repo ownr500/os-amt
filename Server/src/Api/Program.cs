@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using API.Configurations;
 using API.Extensions;
 using API.Middleware;
 using Hangfire;
@@ -33,5 +34,7 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<RevokedTokenMiddleware>();
 app.MapControllers();
 app.UseHangfireDashboard();
+
+JobScheduler.RegisterJobs(); 
 
 await app.RunAsync();
