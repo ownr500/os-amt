@@ -66,12 +66,27 @@ public class ApplicationDbContext : DbContext
             .HasMany(x => x.UserRoles)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
+        
 
         modelBuilder.Entity<RoleEntity>()
             .HasMany(x => x.UserRoles)
             .WithOne(x => x.Role)
             .HasForeignKey(x => x.RoleId);
 
+        modelBuilder.Entity<UserEntity>()
+            .Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        modelBuilder.Entity<RecoveryTokenEntity>()
+            .Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        modelBuilder.Entity<RevokedTokenEntity>()
+            .Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        modelBuilder.Entity<RoleEntity>()
+            .Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        modelBuilder.Entity<TokenEntity>()
+            .Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        modelBuilder.Entity<UserRoleEntity>()
+            .Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+            
+            
         base.OnModelCreating(modelBuilder);
     }
 }
