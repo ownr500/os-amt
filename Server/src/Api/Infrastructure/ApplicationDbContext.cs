@@ -85,8 +85,7 @@ public class ApplicationDbContext : DbContext
             .Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
         modelBuilder.Entity<UserRoleEntity>()
             .Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
-            
-            
+        
         base.OnModelCreating(modelBuilder);
     }
 }
