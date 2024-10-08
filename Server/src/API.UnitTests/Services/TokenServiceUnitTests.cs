@@ -107,31 +107,28 @@ public class TokenServiceUnitTests
         _tokenHandler.WriteToken(refreshOptions)
             .Returns(NewRefreshToken);
 
+        var token = new TokenEntity
+        {
+            AccessToken = AccessToken,
+            RefreshToken = RefreshToken,
+            RefreshTokenActive = true,
+            RefreshTokenExpireAt = _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)
+        };
+        
         var user = new UserEntity
         {
-            Id = Guid.NewGuid(),
             UserRoles = new List<UserRoleEntity>
             {
                 new()
                 {
                     RoleId = RoleConstants.UserRoleId
                 }
-            }
+            },
+            Tokens = new List<TokenEntity>{token}
         };
-
-        var token = new TokenEntity
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            AccessToken = AccessToken,
-            RefreshToken = RefreshToken,
-            RefreshTokenActive = true,
-            RefreshTokenExpireAt = _utcNow.AddMinutes(_refreshTokenInfo.LifeTimeInMinutes)
-        };
-
+        
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(user);
-        dbContext.Tokens.Add(token);
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
@@ -157,7 +154,6 @@ public class TokenServiceUnitTests
 
         var user = new UserEntity
         {
-            Id = Guid.NewGuid(),
             UserRoles = new List<UserRoleEntity>
             {
                 new()
@@ -169,7 +165,6 @@ public class TokenServiceUnitTests
 
         var token = new TokenEntity
         {
-            Id = Guid.NewGuid(),
             UserId = user.Id,
             AccessToken = AccessToken,
             RefreshToken = AnotherRefreshToken,
@@ -207,7 +202,6 @@ public class TokenServiceUnitTests
 
         var user = new UserEntity
         {
-            Id = Guid.NewGuid(),
             UserRoles = new List<UserRoleEntity>
             {
                 new()
@@ -219,7 +213,6 @@ public class TokenServiceUnitTests
 
         var token = new TokenEntity
         {
-            Id = Guid.NewGuid(),
             UserId = user.Id,
             AccessToken = AccessToken,
             RefreshToken = RefreshToken,
@@ -257,7 +250,6 @@ public class TokenServiceUnitTests
 
         var user = new UserEntity
         {
-            Id = Guid.NewGuid(),
             UserRoles = new List<UserRoleEntity>
             {
                 new()
@@ -269,7 +261,6 @@ public class TokenServiceUnitTests
 
         var token = new TokenEntity
         {
-            Id = Guid.NewGuid(),
             UserId = user.Id,
             AccessToken = AccessToken,
             RefreshToken = RefreshToken,
@@ -309,7 +300,6 @@ public class TokenServiceUnitTests
 
         var user = new UserEntity
         {
-            Id = Guid.NewGuid(),
             UserRoles = roles.Select(x => new UserRoleEntity
             {
                 RoleId = RoleConstants.RoleIds[x]
