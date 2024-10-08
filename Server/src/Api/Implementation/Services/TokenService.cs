@@ -44,7 +44,7 @@ public class TokenService : ITokenService
     public async Task<Result<TokenPairModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
         var model = await _dbContext.Tokens
-            .Where(x => x.RefreshToken == token && x.RefreshTokenActive && x.RefreshTokenExpireAt > DateTimeOffset.UtcNow)
+            .Where(x => x.RefreshToken == token && x.RefreshTokenActive && x.RefreshTokenExpireAt > _systemClock.UtcNow)
             .Select(x =>
                 new
                 {
