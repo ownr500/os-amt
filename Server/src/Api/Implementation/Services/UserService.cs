@@ -198,10 +198,20 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public Task<Result> LogoutAsync(CancellationToken ct)
+    public async Task<Result> LogoutAsync(CancellationToken ct)
     {
-        
-        throw new NotImplementedException();
+        try
+        {
+            var userId = GetUserIdFromContext();
+            await _dbContext.Tokens.Where(x => x.UserId == userId
+                                               && x.RefreshTokenActive)
+                .ExecuteDeleteAsync(ct);
+            return Result.Ok();
+        }
+        catch (ArgumentNullException e)
+        {
+            return Result.Fail(MessageConstants.UserNotFound);
+        }
     }
 
     private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)
