@@ -107,4 +107,20 @@ public class UserControllerUnitTests
         var businessError = Assert.IsType<BusinessErrorDto>(conflictResult.Value);
         Assert.Equivalent(errors, businessError.Messages);
     }
+
+    [Fact]
+    public async Task ShouldLogout()
+    {
+        //Arrange
+        var expected = new OkResult();
+        _userService.LogoutAsync(_ct).Returns(Result.Ok());
+
+        //Act
+        var actual = await _controller.LogoutAsync(_ct);
+
+        //Assert
+        await _userService.Received(1)
+            .LogoutAsync(_ct);
+        Assert.Equivalent(expected, actual);
+    }
 }
