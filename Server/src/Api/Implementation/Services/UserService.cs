@@ -203,6 +203,7 @@ public class UserService : IUserService
         try
         {
             var userId = GetUserIdFromContext();
+            await _tokenService.RevokeTokensAsync(userId, ct);
             await _dbContext.Tokens.Where(x => x.UserId == userId
                                                && x.RefreshTokenActive)
                 .ExecuteDeleteAsync(ct);
