@@ -198,6 +198,12 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
+    public Task<Result> LogoutAsync(CancellationToken ct)
+    {
+        
+        throw new NotImplementedException();
+    }
+
     private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)
     {
         var passwordHash = GeneratePasswordHash(newPassword);

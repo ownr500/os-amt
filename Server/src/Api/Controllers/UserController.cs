@@ -33,4 +33,12 @@ public class UserController : ControllerBase
         if (result.IsSuccess) return Ok();
         return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
     }
+    
+    [HttpPost("logout")]
+    public async Task<IActionResult> LogoutAsync(CancellationToken ct)
+    {
+        var result = await _userService.LogoutAsync(ct);
+        if (result.IsSuccess) return Ok();
+        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
+    }
 }
