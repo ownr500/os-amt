@@ -123,4 +123,21 @@ public class UserControllerUnitTests
             .LogoutAsync(_ct);
         Assert.Equivalent(expected, actual);
     }
+
+    [Fact]
+    public async Task ShouldNotLogout()
+    {
+        //Arrange
+        var expected = new ConflictObjectResult(new BusinessErrorDto(new List<string> { MessageConstants.UserNotFound }));
+        _userService.LogoutAsync(_ct)
+            .Returns(Result.Fail(MessageConstants.UserNotFound));
+
+        //Act
+        var actual = await _controller.LogoutAsync(_ct);
+        
+        //Assert
+        await _userService.Received(1)
+            .LogoutAsync(_ct);
+        Assert.Equivalent(expected, actual);
+    }
 }
