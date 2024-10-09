@@ -20,7 +20,8 @@ public class UserService : IUserService
     private readonly IEmailService _emailService;
     private readonly IHttpContextAccessor _contextAccessor;
 
-    public UserService(ApplicationDbContext dbContext, ITokenService tokenService, IEmailService emailService, IHttpContextAccessor contextAccessor)
+    public UserService(ApplicationDbContext dbContext, ITokenService tokenService, IEmailService emailService,
+        IHttpContextAccessor contextAccessor)
     {
         _dbContext = dbContext;
         _tokenService = tokenService;
@@ -61,7 +62,8 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateFirstLastNameAsync(UpdateFirstLastNameModel updateFirstLastNameModel, CancellationToken ct)
+    public async Task<Result> UpdateFirstLastNameAsync(UpdateFirstLastNameModel updateFirstLastNameModel,
+        CancellationToken ct)
     {
         var userId = GetUserIdFromContext();
         var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, ct);
@@ -111,7 +113,7 @@ public class UserService : IUserService
         if (model is null) return Result.Fail(MessageConstants.InvalidCredentials);
 
         var tokenModel = await _tokenService.GenerateTokenPairAsync(model.userId, model.userRoles, ct);
-        
+
         return Result.Ok(new TokenPairModel(
             tokenModel.AccessToken,
             tokenModel.RefreshToken
@@ -179,15 +181,16 @@ public class UserService : IUserService
             .Where(x => x.EmailNormalized == email.ToLower())
             .Select(u => u.Id)
             .FirstOrDefaultAsync(ct);
-        
+
         if (userId == Guid.Empty) return Result.Ok();
-        
+
         var token = _tokenService.GenerateRecoveryToken(userId);
         _emailService.SendRecoveryEmail(email, token, ct);
         return Result.Ok();
     }
 
-    public async Task<Result> ValidateTokenAndChangePasswordAsync(string token, string newPassword, CancellationToken ct)
+    public async Task<Result> ValidateTokenAndChangePasswordAsync(string token, string newPassword,
+        CancellationToken ct)
     {
         var result = _tokenService.ValidateRecoveryToken(token, ct);
         var tokenNotExist = await _tokenService.CheckRecoveryTokenExists(token, ct);
@@ -200,28 +203,21 @@ public class UserService : IUserService
 
     public async Task<Result> LogoutAsync(CancellationToken ct)
     {
-        try
-        {
-            var userId = GetUserIdFromContext();
-            await _tokenService.RevokeTokensAsync(userId, ct);
-            await _dbContext.Tokens.Where(x => x.UserId == userId
-                                               && x.RefreshTokenActive)
-                .ExecuteDeleteAsync(ct);
-            return Result.Ok();
-        }
-        catch (ArgumentNullException e)
-        {
-            return Result.Fail(MessageConstants.UserNotFound);
-        }
+        var userId = GetUserIdFromContext();
+        await _tokenService.RevokeTokensAsync(userId, ct);
+        await _dbContext.Tokens.Where(x => x.UserId == userId
+                                           && x.RefreshTokenActive)
+            .ExecuteDeleteAsync(ct);
+        return Result.Ok();
     }
 
     private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)
     {
         var passwordHash = GeneratePasswordHash(newPassword);
         await _dbContext.Users
-            .Where(x=> x.Id == userId)
-            .ExecuteUpdateAsync(x => 
-                x.SetProperty(p => 
+            .Where(x => x.Id == userId)
+            .ExecuteUpdateAsync(x =>
+                x.SetProperty(p =>
                     p.PasswordHash, passwordHash), ct);
     }
 
@@ -243,4 +239,3 @@ public class UserService : IUserService
         return await _dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == login.ToLower(), ct);
     }
 }
-
