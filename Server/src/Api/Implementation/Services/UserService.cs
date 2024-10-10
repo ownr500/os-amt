@@ -18,15 +18,14 @@ public class UserService : IUserService
     private readonly ApplicationDbContext _dbContext;
     private readonly ITokenService _tokenService;
     private readonly IEmailService _emailService;
-    private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IHttpContextService _contextService;
 
-    public UserService(ApplicationDbContext dbContext, ITokenService tokenService, IEmailService emailService,
-        IHttpContextAccessor contextAccessor)
+    public UserService(ApplicationDbContext dbContext, ITokenService tokenService, IEmailService emailService, IHttpContextService contextService)
     {
         _dbContext = dbContext;
         _tokenService = tokenService;
         _emailService = emailService;
-        _contextAccessor = contextAccessor;
+        _contextService = contextService;
     }
 
     public async Task<Result> RegisterAsync(RegisterModel model, CancellationToken ct)
@@ -160,21 +159,7 @@ public class UserService : IUserService
         await _tokenService.RevokeTokensAsync(userId, ct);
         return Result.Ok();
     }
-
-    public Guid GetUserIdFromContext()
-    {
-        var nameIdentifier = _contextAccessor.HttpContext?.User.Claims
-            .FirstOrDefault(
-                x => string.Equals(x.Type, ClaimTypes.NameIdentifier,
-                    StringComparison.InvariantCultureIgnoreCase))?.Value;
-        if (!Guid.TryParse(nameIdentifier, out var userId))
-        {
-            throw new ArgumentNullException(nameof(ClaimTypes.NameIdentifier));
-        }
-
-        return userId;
-    }
-
+    
     public async Task<Result> SendRecoveryEmailAsync(string email, CancellationToken ct)
     {
         var userId = await _dbContext.Users
@@ -201,14 +186,13 @@ public class UserService : IUserService
         return Result.Ok();
     }
 
-    public async Task<Result> LogoutAsync(CancellationToken ct)
+    public async Task LogoutFromAllDevicesAsync(CancellationToken ct)
     {
         var userId = GetUserIdFromContext();
-        await _tokenService.RevokeTokensAsync(userId, ct);
+        await _tokenService.RevokeTokenAsync(ct);
         await _dbContext.Tokens.Where(x => x.UserId == userId
                                            && x.RefreshTokenActive)
-            .ExecuteDeleteAsync(ct);
-        return Result.Ok();
+            .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
     }
 
     private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)
