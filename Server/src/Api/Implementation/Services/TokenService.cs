@@ -163,9 +163,25 @@ public class TokenService : ITokenService
         await _dbContext.Tokens.Where(x => x.RefreshTokenExpireAt < utcNow).ExecuteDeleteAsync(ct);
     }
 
-    public Task RevokeTokenAsync(string accessToken, CancellationToken ct)
+    public async Task RevokeTokenAsync(string accessToken, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+        var token = await _dbContext.Tokens.FirstOrDefaultAsync(x => x.AccessToken == accessToken, ct);
+        if (token is not null)
+        {
+            _dbContext.RevokedTokens.Add(new RevokedTokenEntity
+            {
+                Token = token.AccessToken,
+                TokenExpireAt = token.AccessTokenExpireAt
+            });
+            await _dbContext.Tokens
+                .Where(x => x.Id == token.Id)
+                .ExecuteUpdateAsync(x =>
+                    x.SetProperty(p => p.RefreshTokenActive, false), ct);
+        }
+
+        await _dbContext.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
     }
 
     public async Task<bool> IsCurrentTokenRevoked()
