@@ -12,12 +12,10 @@ namespace API.Controllers;
 public class TokensController : ControllerBase
 {
     private readonly ITokenService _tokenService;
-    private readonly IUserService _userService;
 
-    public TokensController(ITokenService tokenService, IUserService userService)
+    public TokensController(ITokenService tokenService)
     {
         _tokenService = tokenService;
-        _userService = userService;
     }
 
     [AllowAnonymous]
@@ -32,8 +30,7 @@ public class TokensController : ControllerBase
     [HttpPost("revoke")]
     public async Task<IActionResult> Revoke(CancellationToken ct)
     {
-        var userId = _userService.GetUserIdFromContext();
-        await _tokenService.RevokeTokensAsync(userId, ct);
+        await _tokenService.RevokeTokensAsync(ct);
         return Ok();
     }
 }
