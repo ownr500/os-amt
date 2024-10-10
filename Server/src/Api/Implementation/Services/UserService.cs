@@ -188,11 +188,7 @@ public class UserService : IUserService
 
     public async Task LogoutFromAllDevicesAsync(CancellationToken ct)
     {
-        var userId = _contextService.GetUserIdFromContext();
-        await _tokenService.RevokeTokensAsync(userId, ct);
-        await _dbContext.Tokens.Where(x => x.UserId == userId
-                                           && x.RefreshTokenActive)
-            .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
+        await _tokenService.RevokeTokensAsync(ct);
     }
 
     private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)
