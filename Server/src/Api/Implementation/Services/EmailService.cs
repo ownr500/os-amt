@@ -14,17 +14,7 @@ public class EmailService : IEmailService
     private readonly ServerOptions _serverOptions;
     private readonly int _tokenLifetimeInMinutes;
     private readonly SmtpOptions _smtpOptions;
-
-private string _mailBody = $@"
-        <html>
-        <body>
-            <h1>Password Recovery</h1>
-            <p>To reset your password, please click the link below:</p>
-            <p><a href='{{0}}'>Reset Password</a></p>
-            <p>This link will expire in {{1}} minutes.</p>
-        </body>
-        </html>";
-
+    
     public EmailService(IOptions<SmtpOptions> smtpOptions, IOptions<ServerOptions> serverOptions, IOptions<TokenOptions> tokenOptions)
     {
         _serverOptions = serverOptions.Value;
@@ -55,7 +45,7 @@ private string _mailBody = $@"
         message.Subject = MessageConstants.MailSubjectPasswordRecovery;
 
         var recoveryLink = $"{_serverOptions.Domain}{_serverOptions.TokenRecoveryPath}{token}";
-        var htmlBody = string.Format(_mailBody, recoveryLink, _tokenLifetimeInMinutes);
+        var htmlBody = string.Format(_smtpOptions.MailBody, recoveryLink, _tokenLifetimeInMinutes);
 
         message.Body = new TextPart("html")
         {
