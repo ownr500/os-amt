@@ -21,6 +21,7 @@ internal static class ApplicationBuilderExtensions
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IHttpContextService, HttpContextService>();
         builder.Services.AddScoped<IJwtSecurityTokenProvider, JwtSecurityTokenProvider>();
         builder.Services.AddScoped<JwtSecurityTokenHandler>();
         builder.Services.AddScoped<RevokedTokenMiddleware>();
