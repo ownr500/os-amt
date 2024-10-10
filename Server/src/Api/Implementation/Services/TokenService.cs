@@ -169,18 +169,6 @@ public class TokenService : ITokenService
         throw new NotImplementedException();
     }
 
-    public async Task<bool> ValidateAuthHeader(StringValues header)
-    {
-        var headerArray = header.ToString().Split(' ');
-        if (headerArray.Length == 2)
-        {
-            var tokenRevoked = await _dbContext.RevokedTokens.AnyAsync(x => x.Token == headerArray[1]);
-            if (tokenRevoked) return false;
-        }
-
-        return true;
-    }
-
     public async Task<bool> IsCurrentTokenRevoked()
     {
         var token = _httpContextService.GetToken();
