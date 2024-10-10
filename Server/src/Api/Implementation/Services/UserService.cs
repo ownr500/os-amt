@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using API.Constants;
 using API.Core.Entities;
@@ -189,6 +188,11 @@ public class UserService : IUserService
     public async Task LogoutFromAllDevicesAsync(CancellationToken ct)
     {
         await _tokenService.RevokeTokensAsync(ct);
+    }
+
+    public Task Logout(CancellationToken ct)
+    {
+        throw new NotImplementedException();
     }
 
     private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)

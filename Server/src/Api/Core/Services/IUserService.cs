@@ -17,4 +17,5 @@ public interface IUserService
     Task<Result> SendRecoveryEmailAsync(string email, CancellationToken ct);
     Task<Result> ValidateTokenAndChangePasswordAsync(string token, string newPassword, CancellationToken ct);
     Task LogoutFromAllDevicesAsync(CancellationToken ct);
+    Task Logout(CancellationToken ct);
 }
