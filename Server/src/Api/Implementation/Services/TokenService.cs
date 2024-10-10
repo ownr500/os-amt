@@ -21,6 +21,7 @@ namespace API.Implementation.Services;
 public class TokenService : ITokenService
 {
     private readonly JwtSecurityTokenHandler _tokenHandler;
+    private readonly IHttpContextService _httpContextService;
     private readonly ApplicationDbContext _dbContext;
     private readonly IJwtSecurityTokenProvider _jwtSecurityTokenProvider;
     private readonly ISystemClock _systemClock;
@@ -28,6 +29,7 @@ public class TokenService : ITokenService
 
     public TokenService(
         JwtSecurityTokenHandler tokenHandler,
+        IHttpContextService httpContextService,
         ApplicationDbContext dbContext,
         IOptions<TokenOptions> options,
         IJwtSecurityTokenProvider jwtSecurityTokenProvider,
@@ -35,12 +37,13 @@ public class TokenService : ITokenService
     )
     {
         _tokenHandler = tokenHandler;
+        _httpContextService = httpContextService;
         _dbContext = dbContext;
         _jwtSecurityTokenProvider = jwtSecurityTokenProvider;
         _systemClock = systemClock;
         _options = options.Value;
     }
-    
+
     public async Task<Result<TokenPairModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct)
     {
         var model = await _dbContext.Tokens
@@ -59,7 +62,7 @@ public class TokenService : ITokenService
         if (model is not null)
         {
             model.token.RefreshTokenActive = false;
-            
+
             var tokenModel = await GenerateTokenPairAsync(model.userId, model.roles, ct);
             _dbContext.Tokens.Update(model.token);
             await _dbContext.SaveChangesAsync(ct);
@@ -69,7 +72,8 @@ public class TokenService : ITokenService
         return Result.Fail(MessageConstants.InvalidRefreshToken);
     }
 
-    public async Task<TokenPairModel> GenerateTokenPairAsync(Guid userId, IReadOnlyCollection<Role> roleNames, CancellationToken ct)
+    public async Task<TokenPairModel> GenerateTokenPairAsync(Guid userId, IReadOnlyCollection<Role> roleNames,
+        CancellationToken ct)
     {
         var accessToken = GenerateToken(userId, roleNames, TokenType.Access);
         var refreshToken = GenerateToken(userId, Array.Empty<Role>(), TokenType.Refresh);
@@ -94,7 +98,7 @@ public class TokenService : ITokenService
     public string GenerateRecoveryToken(Guid userId)
     {
         var token = GenerateToken(userId, Array.Empty<Role>(), TokenType.Recovery);
-        
+
         return token.Token;
     }
 
@@ -104,7 +108,7 @@ public class TokenService : ITokenService
         {
             var tokenInfo = _options.TokenInfos.GetValueOrDefault(TokenType.Recovery);
             if (tokenInfo is null) throw new ArgumentNullException(nameof(_options.TokenInfos));
-            
+
             var claims = _tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidAudience = tokenInfo.Audience,
@@ -115,7 +119,7 @@ public class TokenService : ITokenService
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenInfo.SecretKey)),
             }, out var recoveryToken);
-            
+
             var userIdClaim = claims.Claims
                 .FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
 
@@ -125,7 +129,7 @@ public class TokenService : ITokenService
         catch (SecurityTokenExpiredException exception)
         {
             return Result.Fail(MessageConstants.TokenExpired);
-        } 
+        }
         catch (Exception e)
         {
             Console.WriteLine(e.Message);
@@ -160,6 +164,11 @@ public class TokenService : ITokenService
         await _dbContext.Tokens.Where(x => x.RefreshTokenExpireAt < utcNow).ExecuteDeleteAsync(ct);
     }
 
+    public Task RevokeTokenAsync(string accessToken, CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<bool> ValidateAuthHeader(StringValues header)
     {
         var headerArray = header.ToString().Split(' ');
@@ -171,7 +180,13 @@ public class TokenService : ITokenService
 
         return true;
     }
-    
+
+    public async Task<bool> IsCurrentTokenRevoked()
+    {
+        var token = _httpContextService.GetToken();
+        return await _dbContext.RevokedTokens.AnyAsync(x => x.Token == token);
+    }
+
     public async Task RevokeTokensAsync(Guid userId, CancellationToken ct)
     {
         var revokedTokens = await _dbContext.Tokens
@@ -200,12 +215,12 @@ public class TokenService : ITokenService
             await transaction.CommitAsync(ct);
         }
     }
-    
+
     private GeneratedTokenModel GenerateToken(Guid userId, IReadOnlyCollection<Role> roles, TokenType type)
     {
         var tokenInfo = _options.TokenInfos.GetValueOrDefault(type);
         if (tokenInfo is null) throw new ArgumentNullException(nameof(_options.TokenInfos));
-        
+
         var claims = GetClaims(userId, roles);
         var generateTokenModel = tokenInfo.ToModel(claims);
         var token = GenerateToken(generateTokenModel);
