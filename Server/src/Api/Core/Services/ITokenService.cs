@@ -1,8 +1,6 @@
 ﻿using API.Core.Enums;
 using API.Core.Models;
 using FluentResults;
-using Microsoft.Extensions.Primitives;
-using Microsoft.IdentityModel.Tokens;
 
 namespace API.Core.Services;
 
