@@ -10,7 +10,7 @@ public interface ITokenService
 {
     Task<Result<TokenPairModel>> GenerateNewTokenFromRefreshTokenAsync(string token, CancellationToken ct);
     Task<TokenPairModel> GenerateTokenPairAsync(Guid userId, IReadOnlyCollection<Role> claims, CancellationToken ct);
-    Task RevokeTokensAsync(Guid userId, CancellationToken ct);
+    Task RevokeTokensAsync(CancellationToken ct);
     string GenerateRecoveryToken(Guid userId);
     Result<UserIdAndExpireModel> ValidateRecoveryToken(string token, CancellationToken ct);
     Task AddRecoveryTokenAsync(string token, DateTimeOffset valueExpireAt, CancellationToken ct);

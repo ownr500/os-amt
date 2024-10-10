@@ -13,7 +13,6 @@ using FluentResults;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Implementation.Services;
@@ -175,8 +174,9 @@ public class TokenService : ITokenService
         return await _dbContext.RevokedTokens.AnyAsync(x => x.Token == token);
     }
 
-    public async Task RevokeTokensAsync(Guid userId, CancellationToken ct)
+    public async Task RevokeTokensAsync(CancellationToken ct)
     {
+        var userId = _httpContextService.GetUserIdFromContext();
         var revokedTokens = await _dbContext.Tokens
             .Where(x => x.UserId == userId && x.RefreshTokenActive)
             .Select(x => new RevokedTokenEntity[]
