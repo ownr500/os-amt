@@ -64,7 +64,7 @@ public class UserService : IUserService
     public async Task<Result> UpdateFirstLastNameAsync(UpdateFirstLastNameModel updateFirstLastNameModel,
         CancellationToken ct)
     {
-        var userId = GetUserIdFromContext();
+        var userId = _contextService.GetUserIdFromContext();
         var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, ct);
         if (user is null) return Result.Fail(MessageConstants.UserNotFound);
 
@@ -188,8 +188,8 @@ public class UserService : IUserService
 
     public async Task LogoutFromAllDevicesAsync(CancellationToken ct)
     {
-        var userId = GetUserIdFromContext();
-        await _tokenService.RevokeTokenAsync(ct);
+        var userId = _contextService.GetUserIdFromContext();
+        await _tokenService.RevokeTokensAsync(userId, ct);
         await _dbContext.Tokens.Where(x => x.UserId == userId
                                            && x.RefreshTokenActive)
             .ExecuteUpdateAsync(x => x.SetProperty(p => p.RefreshTokenActive, false), ct);
