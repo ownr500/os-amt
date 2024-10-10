@@ -35,10 +35,9 @@ public class UserController : ControllerBase
     }
     
     [HttpPost("logoutFromAllDevices")]
-    public async Task<IActionResult> LogoutAsync(CancellationToken ct)
+    public async Task<IActionResult> LogoutFromAllDevicesAsync(CancellationToken ct)
     {
-        var result = await _userService.LogoutFromAllDevicesAsync(ct);
-        if (result.IsSuccess) return Ok();
-        return new ConflictObjectResult(new BusinessErrorDto(result.GetErrors()));
+        await _userService.LogoutFromAllDevicesAsync(ct);
+        return Ok();
     }
 }
