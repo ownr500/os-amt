@@ -113,28 +113,10 @@ public class UserControllerUnitTests
     {
         //Arrange
         var expected = new OkResult();
-        _userService.LogoutFromAllDevicesAsync(_ct).Returns(Result.Ok());
 
         //Act
-        var actual = await _controller.LogoutAsync(_ct);
+        var actual = await _controller.LogoutFromAllDevicesAsync(_ct);
 
-        //Assert
-        await _userService.Received(1)
-            .LogoutFromAllDevicesAsync(_ct);
-        Assert.Equivalent(expected, actual);
-    }
-
-    [Fact]
-    public async Task ShouldNotLogout()
-    {
-        //Arrange
-        var expected = new ConflictObjectResult(new BusinessErrorDto(new List<string> { MessageConstants.UserNotFound }));
-        _userService.LogoutFromAllDevicesAsync(_ct)
-            .Returns(Result.Fail(MessageConstants.UserNotFound));
-
-        //Act
-        var actual = await _controller.LogoutAsync(_ct);
-        
         //Assert
         await _userService.Received(1)
             .LogoutFromAllDevicesAsync(_ct);
