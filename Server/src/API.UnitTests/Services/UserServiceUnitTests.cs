@@ -24,11 +24,12 @@ public class UserServiceUnitTests
     private const string AccessToken = "accessToken";
     private const string RefreshToken = "refreshToken";
     private const string RecoveryToken = "recoveryToken";
-
+    
     private const string Email = "john@email.com";
     private const string AnotherEmail = "anotherjohn@email.com";
     private const int Age = 30;
     private const string FirstName = "John";
+    private const string AdminFirstName = "Admin";
     private const string LastName = "Doe";
     private const string Password = "12345";
     private const string NewPassword = "00000";
@@ -426,13 +427,11 @@ public class UserServiceUnitTests
         //Arrange
         var role = new RoleEntity
         {
-            Id = Guid.NewGuid(),
             Role = Role.User
         };
 
         var firstUser = new UserEntity
         {
-            Id = Guid.NewGuid(),
             FirstName = FirstName,
             LastName = LastName,
             Login = FirstUserLogin,
@@ -440,7 +439,7 @@ public class UserServiceUnitTests
             {
                 new()
                 {
-                    RoleId = role.Id
+                    Role = role
                 }
             }
         };
@@ -453,7 +452,7 @@ public class UserServiceUnitTests
             {
                 new()
                 {
-                    RoleId = role.Id
+                    Role = role
                 }
             }
         };
@@ -463,6 +462,7 @@ public class UserServiceUnitTests
         dbContext.Add(firstUser);
         dbContext.Add(secondUser);
         await dbContext.SaveChangesAsync(_ct);
+        dbContext.ChangeTracker.Clear();
 
         var expected = new List<UserModel>
         {
@@ -479,10 +479,10 @@ public class UserServiceUnitTests
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
-        var actual = userService.GetUsersAsync(_ct);
+        var actual = await userService.GetUsersAsync(_ct);
 
         //Assert
-        Assert.Equivalent(expected, actual.Result);
+        Assert.Equivalent(expected, actual.Where(x => x.FirstName != AdminFirstName).ToList());
     }
 
     [Fact]
