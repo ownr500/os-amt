@@ -14,13 +14,16 @@ internal sealed class RevokedTokenMiddleware : IMiddleware
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var revoked = await _tokenService.IsCurrentTokenRevoked();
-        if (revoked)
+        if (context.User.Identity?.IsAuthenticated == true)
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return;
+            var revoked = await _tokenService.IsCurrentTokenRevoked();
+            if (revoked)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return;
+            }
         }
-
+        
         await next(context);
     }
 }

@@ -50,7 +50,7 @@ public class AdminUsersController : ControllerBase
     [HttpPost("{id:guid}/revoke-all-tokens")]
     public async Task<IActionResult> Revoke([FromRoute] Guid id, CancellationToken ct)
     {
-        await _tokenService.RevokeTokensAsync(id, ct);
+        await _tokenService.RevokeTokensAsync(ct);
         return Ok();
     }
 }
