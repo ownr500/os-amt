@@ -232,6 +232,7 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(firstUser);
         await dbContext.SaveChangesAsync(_ct);
+        dbContext.ChangeTracker.Clear();
 
         var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
@@ -482,7 +483,8 @@ public class UserServiceUnitTests
         var actual = await userService.GetUsersAsync(_ct);
 
         //Assert
-        Assert.Equivalent(expected, actual.Where(x => x.FirstName != AdminFirstName).ToList());
+        var updatedActual = actual.Where(x => x.FirstName != AdminFirstName).ToList();
+        Assert.Equivalent(expected, updatedActual);
     }
 
     [Fact]
