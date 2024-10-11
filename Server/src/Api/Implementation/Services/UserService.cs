@@ -142,7 +142,7 @@ public class UserService : IUserService
 
         await _dbContext.UserRoles.AddAsync(userRole, ct);
         await _dbContext.SaveChangesAsync(ct);
-        await _tokenService.RevokeTokensAsync(userId, ct);
+        await _tokenService.RevokeTokensAsync(ct);
         return Result.Ok();
     }
 
@@ -155,7 +155,7 @@ public class UserService : IUserService
         _dbContext.UserRoles.Remove(existingRole);
         await _dbContext.SaveChangesAsync(ct);
 
-        await _tokenService.RevokeTokensAsync(userId, ct);
+        await _tokenService.RevokeTokensAsync(ct);
         return Result.Ok();
     }
     
