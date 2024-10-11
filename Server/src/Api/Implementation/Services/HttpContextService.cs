@@ -8,19 +8,15 @@ namespace API.Implementation.Services;
 public class HttpContextService : IHttpContextService
 {
     private readonly IHttpContextAccessor _contextAccessor;
-    private readonly HttpContext _context;
 
     public HttpContextService(IHttpContextAccessor contextAccessor)
     {
         _contextAccessor = contextAccessor;
-        _context = _contextAccessor.HttpContext is null
-            ? throw new ArgumentNullException(nameof(_contextAccessor.HttpContext))
-            : _contextAccessor.HttpContext;
-
     }
     public string GetToken()
     {
-        if (_context.Request.Headers
+        var context = CheckContextAndThrowException();
+        if (context.Request.Headers
             .TryGetValue(HeaderNames.Authorization, out var header))
         {
             return ExtractTokenFromHeader(header);
@@ -48,5 +44,12 @@ public class HttpContextService : IHttpContextService
         var headerArray = header.ToString().Split(' ');
         if (headerArray.Length != 2) throw new ArgumentNullException(nameof(header));
         return headerArray[1];
+    }
+
+    private HttpContext CheckContextAndThrowException()
+    {
+        return _contextAccessor.HttpContext is null
+            ? throw new ArgumentNullException(nameof(_contextAccessor.HttpContext))
+            : _contextAccessor.HttpContext;
     }
 }
