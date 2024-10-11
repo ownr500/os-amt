@@ -277,9 +277,7 @@ public class UserServiceUnitTests
         //Arrange
         var dbContext = DbHelper.CreateDbContext();
         var model = new ChangePasswordModel(SecondUserLogin, Password, NewPassword);
-        var errorMessage = MessageConstants.UserNotFound;
-        var errors = new List<string> { errorMessage };
-        var expected = new Result().WithErrors(errors);
+        var expected = new Result().WithErrors(new List<string>{MessageConstants.UserNotFound});
         var user = new UserEntity
         {
             LoginNormalized = FirstUserLogin.ToLower(),
@@ -306,9 +304,7 @@ public class UserServiceUnitTests
         //Arrange
         var dbContext = DbHelper.CreateDbContext();
         var model = new ChangePasswordModel(FirstUserLogin, NewPassword, NewPassword);
-        var errorMessage = MessageConstants.CurrentPasswordNotMatch;
-        var errors = new List<string> { errorMessage };
-        var expected = new Result().WithErrors(errors);
+        var expected = new Result().WithErrors(new List<string>{MessageConstants.CurrentPasswordNotMatch});
         var user = new UserEntity
         {
             LoginNormalized = FirstUserLogin.ToLower(),
