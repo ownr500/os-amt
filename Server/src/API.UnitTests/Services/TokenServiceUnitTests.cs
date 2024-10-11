@@ -21,6 +21,7 @@ namespace API.UnitTests.Services;
 public class TokenServiceUnitTests
 {
     private readonly JwtSecurityTokenHandler _tokenHandler;
+    private readonly IHttpContextService _httpContextService;
     private readonly IOptions<TokenOptions> _options;
     private readonly IJwtSecurityTokenProvider _tokenProvider;
     private readonly ISystemClock _systemClock;
@@ -64,6 +65,7 @@ public class TokenServiceUnitTests
     public TokenServiceUnitTests()
     {
         _tokenHandler = Substitute.For<JwtSecurityTokenHandler>();
+        _httpContextService = Substitute.For<IHttpContextService>();
         _options = Substitute.For<IOptions<TokenOptions>>();
         _tokenProvider = Substitute.For<IJwtSecurityTokenProvider>();
         _systemClock = Substitute.For<ISystemClock>();
@@ -132,7 +134,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -178,7 +180,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -226,7 +228,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -274,7 +276,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateNewTokenFromRefreshTokenAsync(RefreshToken, _ct);
@@ -324,7 +326,7 @@ public class TokenServiceUnitTests
         _tokenHandler.WriteToken(refreshOptions)
             .Returns(RefreshToken);
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         var actual = await tokenService.GenerateTokenPairAsync(user.Id, roles, _ct);
@@ -366,7 +368,7 @@ public class TokenServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, dbContext, _options, _tokenProvider, _systemClock);
 
         var recoveryOptions = new JwtSecurityToken();
         var expireAt = _utcNow.AddMinutes(_recoveryTokenInfo.LifeTimeInMinutes);
@@ -404,7 +406,7 @@ public class TokenServiceUnitTests
         });
 
         var userId = Guid.NewGuid();
-        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, DbHelper.CreateDbContext(), _options, _tokenProvider,
             _systemClock);
 
         //Act
@@ -419,9 +421,6 @@ public class TokenServiceUnitTests
     {
         //Arrange
         var expireAt = _utcNow.AddMinutes(_recoveryTokenInfo.LifeTimeInMinutes);
-        //todo resolve milliseconds problem
-        // expireAt = expireAt.AddMilliseconds(-expireAt.Millisecond);
-        // expireAt = expireAt.AddMicroseconds(-expireAt.Microsecond);
         var userId = Guid.NewGuid();
 
         var userIdAndExpireModel = new UserIdAndExpireModel(userId, expireAt);
@@ -445,7 +444,7 @@ public class TokenServiceUnitTests
                 return new ClaimsPrincipal(claims);
             });
 
-        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, DbHelper.CreateDbContext(), _options, _tokenProvider,
             _systemClock);
 
         //Act
@@ -464,7 +463,6 @@ public class TokenServiceUnitTests
     {
         //Arrange
         var expected = Result.Fail(MessageConstants.PasswordChangeFailed);
-        ;
 
         _options.Value.Returns(new TokenOptions
         {
@@ -475,7 +473,7 @@ public class TokenServiceUnitTests
                 }
             }
         });
-        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, DbHelper.CreateDbContext(), _options, _tokenProvider,
             _systemClock);
 
         //Act
@@ -498,7 +496,7 @@ public class TokenServiceUnitTests
                      && x.ValidIssuer == _recoveryTokenInfo.Issuer), out Arg.Any<SecurityToken>())
             .Returns(new ClaimsPrincipal(claims));
 
-        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, DbHelper.CreateDbContext(), _options, _tokenProvider,
             _systemClock);
         
         //Act
@@ -518,12 +516,9 @@ public class TokenServiceUnitTests
         _tokenHandler.ValidateToken(RecoveryToken, Arg.Is<TokenValidationParameters>(
                 x => x.ValidAudience == _recoveryTokenInfo.Audience
                      && x.ValidIssuer == _recoveryTokenInfo.Issuer), out Arg.Any<SecurityToken>())
-            .Returns(x =>
-            {
-                throw new SecurityTokenExpiredException();
-            });
+            .Returns(x => throw new SecurityTokenExpiredException());
 
-        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, DbHelper.CreateDbContext(), _options, _tokenProvider,
             _systemClock);
         
         //Act
@@ -549,7 +544,7 @@ public class TokenServiceUnitTests
             }
         });
 
-        var tokenService = new TokenService(_tokenHandler, DbHelper.CreateDbContext(), _options, _tokenProvider,
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, DbHelper.CreateDbContext(), _options, _tokenProvider,
             _systemClock);
 
         //Act
@@ -625,7 +620,7 @@ public class TokenServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
         
-        var tokenService = new TokenService(_tokenHandler, dbContext, _options, _tokenProvider, _systemClock);
+        var tokenService = new TokenService(_tokenHandler, _httpContextService, dbContext, _options, _tokenProvider, _systemClock);
 
         //Act
         await tokenService.RemoveExpiredTokensAsync(_ct);
