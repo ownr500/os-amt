@@ -17,7 +17,7 @@ public class UserServiceUnitTests
 {
     private readonly ITokenService _tokenService;
     private readonly IEmailService _emailService;
-    private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IHttpContextService _contextService;
     private readonly CancellationToken _ct = CancellationToken.None;
 
     private const string FirstUserLogin = "FirstUserLogin";
@@ -42,7 +42,7 @@ public class UserServiceUnitTests
     {
         _tokenService = Substitute.For<ITokenService>();
         _emailService = Substitute.For<IEmailService>();
-        _contextAccessor = Substitute.For<IHttpContextAccessor>();
+        _contextService = Substitute.For<IHttpContextService>();
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(firstUser);
         dbContext.Users.Add(secondUser);
         await dbContext.SaveChangesAsync(_ct);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.DeleteAsync(FirstUserLogin.ToUpper(), _ct);
@@ -92,7 +92,7 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(firstUser);
         await dbContext.SaveChangesAsync(_ct);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.DeleteAsync(SecondUserLogin.ToUpper(), _ct);
@@ -112,7 +112,7 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateDbContext();
         var registerModel = new RegisterModel(FirstName, LastName, Email, Age, FirstUserLogin, Password);
         var expected = Result.Ok();
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.RegisterAsync(registerModel, _ct);
@@ -129,7 +129,7 @@ public class UserServiceUnitTests
         //Arrange
         var dbContext = DbHelper.CreateDbContext();
         var registerModel = new RegisterModel(FirstName, LastName, Email, Age, FirstUserLogin, Password);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.RegisterAsync(registerModel, _ct);
@@ -159,7 +159,7 @@ public class UserServiceUnitTests
         var errorMessage = MessageConstants.UserAlreadyRegistered;
         var errors = new List<string> { errorMessage };
         var expected = new Result().WithErrors(errors);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.RegisterAsync(registerModel, _ct);
@@ -193,7 +193,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.UpdateFirstLastNameAsync(model, _ct);
@@ -234,7 +234,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(firstUser);
         await dbContext.SaveChangesAsync(_ct);
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.UpdateFirstLastNameAsync(model, _ct);
@@ -260,7 +260,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.PasswordChangeAsync(model, _ct);
@@ -317,7 +317,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.PasswordChangeAsync(model, _ct);
@@ -368,7 +368,7 @@ public class UserServiceUnitTests
                 && x.Count == roles.Count()), _ct)
             .Returns(Task.FromResult(tokenPairModel));
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.SingInAsync(singInModel, _ct);
@@ -413,7 +413,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
 
         //Act
@@ -480,7 +480,7 @@ public class UserServiceUnitTests
             )
         };
         
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = userService.GetUsersAsync(_ct);
@@ -503,7 +503,7 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
         
         //Act
         var actual = await userService.AddRoleAsync(user.Id, Role.User, _ct);
@@ -537,7 +537,7 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
         
         //Act
         var actual = await userService.AddRoleAsync(user.Id, Role.User, _ct);
@@ -571,7 +571,7 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
         
         //Act
         var actual = await userService.RemoveRoleAsync(user.Id, Role.User, _ct);
@@ -600,7 +600,7 @@ public class UserServiceUnitTests
         var dbContext = DbHelper.CreateSqLiteDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
         
         //Act
         var actual = await userService.RemoveRoleAsync(user.Id, Role.User, _ct);
@@ -668,7 +668,7 @@ public class UserServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         
         _tokenService.GenerateRecoveryToken(user.Id).Returns(RecoveryToken);
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
         
         //Act
         var actual = await userService.SendRecoveryEmailAsync(Email, _ct);
@@ -696,7 +696,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
         
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
         
         //Act
         var actual = await userService.SendRecoveryEmailAsync(AnotherEmail, _ct);
@@ -732,7 +732,7 @@ public class UserServiceUnitTests
         _tokenService.ValidateRecoveryToken(RecoveryToken, _ct).Returns(model);
         _tokenService.CheckRecoveryTokenExists(RecoveryToken, _ct).Returns(Result.Ok());
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
         
         //Act
         var actual = await userService.ValidateTokenAndChangePasswordAsync(RecoveryToken, NewPassword, _ct);
@@ -776,7 +776,7 @@ public class UserServiceUnitTests
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
         
         //Act
         var actual = await userService.ValidateTokenAndChangePasswordAsync(RecoveryToken, NewPassword, _ct);
