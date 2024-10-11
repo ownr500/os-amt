@@ -373,7 +373,7 @@ public class TokenServiceUnitTests
         var recoveryOptions = new JwtSecurityToken();
         var expireAt = _utcNow.AddMinutes(_recoveryTokenInfo.LifeTimeInMinutes);
         _tokenProvider
-            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRecovery), expireAt.DateTime)
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRecovery), expireAt.UtcDateTime)
             .Returns(recoveryOptions);
 
         _tokenHandler.WriteToken(recoveryOptions).Returns(RecoveryToken);
@@ -383,7 +383,7 @@ public class TokenServiceUnitTests
 
         //Assert
         _tokenProvider.Received(1)
-            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRecovery), expireAt.DateTime);
+            .Get(Arg.Is<GenerateTokenModel>(x => x.TokenInfo.Audience == AudienceRecovery), expireAt.UtcDateTime);
         _tokenHandler.Received(1)
             .WriteToken(recoveryOptions);
         Assert.Equal(expected, actual);
