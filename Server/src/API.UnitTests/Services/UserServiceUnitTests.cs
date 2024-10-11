@@ -177,8 +177,7 @@ public class UserServiceUnitTests
         var model = new UpdateFirstLastNameModel(updatedFirstName, updatedLastName);
 
         var userId = Guid.Parse("E5608234-8E55-4122-95AC-6FC514CB5BA0");
-        var userClaims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) };
-        _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
+        _contextService.GetUserIdFromContext().Returns(userId);
 
         var user = new UserEntity
         {
@@ -197,6 +196,8 @@ public class UserServiceUnitTests
         var actual = await userService.UpdateFirstLastNameAsync(model, _ct);
 
         //Assert
+        _contextService.Received(1)
+            .GetUserIdFromContext();
         var updatedUser = await dbContext.Users.FirstAsync(x => x.Id == userId, _ct);
         Assert.Equal(updatedFirstName, updatedUser.FirstName);
         Assert.Equal(updatedLastName, updatedUser.LastName);
@@ -217,8 +218,7 @@ public class UserServiceUnitTests
 
         var firstUserId = Guid.Parse("E5608234-8E55-4122-95AC-6FC514CB5BA0");
         var secondUserId = Guid.Parse("8753F409-C9AD-4525-9A64-C252719E386F");
-        var userClaims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, secondUserId.ToString()) };
-        _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
+        _contextService.GetUserIdFromContext().Returns(secondUserId);
 
         var firstUser = new UserEntity
         {
@@ -238,6 +238,8 @@ public class UserServiceUnitTests
         var actual = await userService.UpdateFirstLastNameAsync(model, _ct);
 
         //Assert
+        _contextService.Received(1)
+            .GetUserIdFromContext();
         var updatedUser = await dbContext.Users.FirstAsync(x => x.Id == firstUserId, _ct);
         Assert.Equal(FirstName, updatedUser.FirstName);
         Assert.Equal(LastName, updatedUser.LastName);
@@ -508,7 +510,7 @@ public class UserServiceUnitTests
 
         //Assert
         await _tokenService.Received(1)
-            .RevokeTokensAsync(user.Id, _ct);
+            .RevokeTokensAsync(_ct);
 
         Assert.True(dbContext.UserRoles.Any(x => x.UserId == user.Id && x.RoleId == RoleConstants.UserRoleId));
         Assert.Equivalent(expected, actual);
@@ -542,7 +544,7 @@ public class UserServiceUnitTests
 
         //Assert
         await _tokenService.Received(0)
-            .RevokeTokensAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+            .RevokeTokensAsync(Arg.Any<CancellationToken>());
         
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
@@ -576,7 +578,7 @@ public class UserServiceUnitTests
 
         //Assert
         await _tokenService.Received(1)
-            .RevokeTokensAsync(user.Id, _ct);
+            .RevokeTokensAsync(_ct);
 
         Assert.False(dbContext.UserRoles.Any(x => x.UserId == user.Id && x.RoleId == RoleConstants.UserRoleId));
         Assert.Equivalent(expected, actual);
@@ -605,7 +607,7 @@ public class UserServiceUnitTests
 
         //Assert
         await _tokenService.Received(0)
-            .RevokeTokensAsync(user.Id, _ct);
+            .RevokeTokensAsync(_ct);
 
         Assert.False(dbContext.UserRoles.Any(x => x.UserId == user.Id && x.RoleId == RoleConstants.UserRoleId));
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
