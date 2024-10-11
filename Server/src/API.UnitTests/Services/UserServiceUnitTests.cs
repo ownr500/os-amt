@@ -288,7 +288,7 @@ public class UserServiceUnitTests
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
 
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
+        var userService = new UserService(dbContext, _tokenService, _emailService, _contextService);
 
         //Act
         var actual = await userService.PasswordChangeAsync(model, _ct);
