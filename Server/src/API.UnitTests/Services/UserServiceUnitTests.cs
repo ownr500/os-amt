@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using API.Constants;
+﻿using API.Constants;
 using API.Core.Entities;
 using API.Core.Enums;
 using API.Core.Models;
@@ -7,7 +6,6 @@ using API.Core.Services;
 using API.Implementation.Services;
 using API.UnitTests.Helpers;
 using FluentResults;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 
@@ -137,8 +135,8 @@ public class UserServiceUnitTests
         //Assert
         var user = await dbContext.Users.Include(x => x.UserRoles)
             .FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
-        var a = user.UserRoles.First(x => x.RoleId == RoleConstants.UserRoleId);
-        Assert.Equal(RoleConstants.UserRoleId, a.RoleId);
+        var userRoleEntity = user?.UserRoles.First(x => x.RoleId == RoleConstants.UserRoleId);
+        Assert.Equal(RoleConstants.UserRoleId, userRoleEntity?.RoleId);
         Assert.Equivalent(Result.Ok(), actual);
     }
 
@@ -266,8 +264,8 @@ public class UserServiceUnitTests
         var actual = await userService.PasswordChangeAsync(model, _ct);
 
         //Assert
-        var userUpdated = await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower());
-        Assert.Equal(userUpdated.PasswordHash, PasswordHelper.GeneratePasswordHash(NewPassword));
+        var userUpdated = await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
+        Assert.Equal(userUpdated?.PasswordHash, PasswordHelper.GeneratePasswordHash(NewPassword));
         Assert.Equivalent(Result.Ok(), actual);
     }
 
@@ -325,7 +323,7 @@ public class UserServiceUnitTests
         //Assert
         var userUpdated =
             await dbContext.Users.FirstOrDefaultAsync(x => x.LoginNormalized == FirstUserLogin.ToLower(), _ct);
-        Assert.Equal(PasswordHelper.GeneratePasswordHash(Password), userUpdated.PasswordHash);
+        Assert.Equal(PasswordHelper.GeneratePasswordHash(Password), userUpdated?.PasswordHash);
         Assert.Equivalent(expected, actual);
     }
 
@@ -613,45 +611,7 @@ public class UserServiceUnitTests
         Assert.Equivalent(expected.IsFailed, actual.IsFailed);
         Assert.Equivalent(expected.Errors, actual.Errors);
     }
-
-    [Fact]
-    public void ShouldGetUserIdFromContext()
-    {
-        //Arrane
-        var expected = Guid.Parse(UserId);
-        
-        var userClaims = new List<Claim> { new(ClaimTypes.NameIdentifier, UserId) };
-        _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
-
-        var dbContext = DbHelper.CreateDbContext();
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-
-        //Act
-        var actual = userService.GetUserIdFromContext();
-
-        //Assert
-        Assert.Equal(expected, actual);
-    }
     
-    [Fact]
-    public void ShouldNotGetUserIdFromContext()
-    {
-        //Arrane
-        var expected = nameof(ClaimTypes.NameIdentifier);
-
-        var userClaims = new List<Claim>();
-        _contextAccessor.HttpContext.User.Claims.Returns(userClaims);
-
-        var dbContext = DbHelper.CreateDbContext();
-        var userService = new UserService(dbContext, _tokenService, _emailService, _contextAccessor);
-
-        //Act
-        var actual = Assert.Throws<ArgumentNullException>(() => userService.GetUserIdFromContext());
-
-        //Assert
-        Assert.Equal(expected, actual.ParamName);
-    }
-
     [Fact]
     public async Task ShouldSendRecoveryEmailAsync()
     {
