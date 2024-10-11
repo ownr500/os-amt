@@ -190,9 +190,9 @@ public class UserService : IUserService
         await _tokenService.RevokeTokensAsync(ct);
     }
 
-    public Task Logout(CancellationToken ct)
+    public async Task Logout(CancellationToken ct)
     {
-        throw new NotImplementedException();
+        await _tokenService.RevokeTokenAsync(_contextService.GetToken(), ct);
     }
 
     private async Task SetPasswordAsync(Guid userId, string newPassword, CancellationToken ct)
