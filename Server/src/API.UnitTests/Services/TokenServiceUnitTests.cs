@@ -307,7 +307,7 @@ public class TokenServiceUnitTests
                 RoleId = RoleConstants.RoleIds[x]
             }).ToList()
         };
-        var dbContext = DbHelper.CreateSqLiteDbContext();
+        var dbContext = DbHelper.CreateDbContext();
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(_ct);
         dbContext.ChangeTracker.Clear();
