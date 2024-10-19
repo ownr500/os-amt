@@ -25,7 +25,7 @@ namespace API.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("API.Models.Entities.RecoveryTokenEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.RecoveryTokenEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -47,7 +47,7 @@ namespace API.Migrations
                     b.ToTable("RecoveryTokens");
                 });
 
-            modelBuilder.Entity("API.Models.Entities.RevokedTokenEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.RevokedTokenEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -69,7 +69,7 @@ namespace API.Migrations
                     b.ToTable("RevokedTokens");
                 });
 
-            modelBuilder.Entity("API.Models.Entities.RoleEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.RoleEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -95,7 +95,7 @@ namespace API.Migrations
                         });
                 });
 
-            modelBuilder.Entity("API.Models.Entities.TokenEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.TokenEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -139,7 +139,7 @@ namespace API.Migrations
                     b.ToTable("Tokens");
                 });
 
-            modelBuilder.Entity("API.Models.Entities.UserEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -208,7 +208,7 @@ namespace API.Migrations
                         });
                 });
 
-            modelBuilder.Entity("API.Models.Entities.UserRoleEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.UserRoleEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -237,9 +237,9 @@ namespace API.Migrations
                         });
                 });
 
-            modelBuilder.Entity("API.Models.Entities.TokenEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.TokenEntity", b =>
                 {
-                    b.HasOne("API.Models.Entities.UserEntity", "User")
+                    b.HasOne("AUTH-API.Models.Entities.UserEntity", "User")
                         .WithMany("Tokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -248,15 +248,15 @@ namespace API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("API.Models.Entities.UserRoleEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.UserRoleEntity", b =>
                 {
-                    b.HasOne("API.Models.Entities.RoleEntity", "Role")
+                    b.HasOne("AUTH-API.Models.Entities.RoleEntity", "Role")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("API.Models.Entities.UserEntity", "User")
+                    b.HasOne("AUTH-API.Models.Entities.UserEntity", "User")
                         .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -267,12 +267,12 @@ namespace API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("API.Models.Entities.RoleEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.RoleEntity", b =>
                 {
                     b.Navigation("UserRoles");
                 });
 
-            modelBuilder.Entity("API.Models.Entities.UserEntity", b =>
+            modelBuilder.Entity("AUTH-API.Models.Entities.UserEntity", b =>
                 {
                     b.Navigation("Tokens");
 

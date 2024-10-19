@@ -1,8 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "src\Api\API.csproj", "{1909FA9E-CEB8-4640-BAD2-408A627CEBE2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AUTH-API", "src\Api\AUTH-API.csproj", "{1909FA9E-CEB8-4640-BAD2-408A627CEBE2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.UnitTests", "src\API.UnitTests\API.UnitTests.csproj", "{854AC99B-A92C-4AF7-B01A-1328125AE42F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AUTH-API.UnitTests", "src\AUTH-API.UnitTests\AUTH-API.UnitTests.csproj", "{854AC99B-A92C-4AF7-B01A-1328125AE42F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company", "src\Company\Company.csproj", "{1671D94B-2449-4A50-BF4E-322AFB17CF69}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company.UnitTests", "src\Company.UnitTests\Company.UnitTests.csproj", "{C116DE67-5D38-473D-A1AA-50014C58570D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +22,13 @@ Global
 		{854AC99B-A92C-4AF7-B01A-1328125AE42F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{854AC99B-A92C-4AF7-B01A-1328125AE42F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{854AC99B-A92C-4AF7-B01A-1328125AE42F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1671D94B-2449-4A50-BF4E-322AFB17CF69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1671D94B-2449-4A50-BF4E-322AFB17CF69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1671D94B-2449-4A50-BF4E-322AFB17CF69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1671D94B-2449-4A50-BF4E-322AFB17CF69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C116DE67-5D38-473D-A1AA-50014C58570D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C116DE67-5D38-473D-A1AA-50014C58570D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C116DE67-5D38-473D-A1AA-50014C58570D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C116DE67-5D38-473D-A1AA-50014C58570D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

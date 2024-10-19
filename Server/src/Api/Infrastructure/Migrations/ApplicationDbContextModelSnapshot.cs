@@ -22,7 +22,7 @@ namespace API.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("API.Core.Entities.RecoveryTokenEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.RecoveryTokenEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -45,7 +45,7 @@ namespace API.Migrations
                     b.ToTable("RecoveryTokens");
                 });
 
-            modelBuilder.Entity("API.Core.Entities.RevokedTokenEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.RevokedTokenEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -68,7 +68,7 @@ namespace API.Migrations
                     b.ToTable("RevokedTokens");
                 });
 
-            modelBuilder.Entity("API.Core.Entities.RoleEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.RoleEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -95,7 +95,7 @@ namespace API.Migrations
                         });
                 });
 
-            modelBuilder.Entity("API.Core.Entities.TokenEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.TokenEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -140,7 +140,7 @@ namespace API.Migrations
                     b.ToTable("Tokens");
                 });
 
-            modelBuilder.Entity("API.Core.Entities.UserEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -210,7 +210,7 @@ namespace API.Migrations
                         });
                 });
 
-            modelBuilder.Entity("API.Core.Entities.UserRoleEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.UserRoleEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -240,9 +240,9 @@ namespace API.Migrations
                         });
                 });
 
-            modelBuilder.Entity("API.Core.Entities.TokenEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.TokenEntity", b =>
                 {
-                    b.HasOne("API.Core.Entities.UserEntity", "User")
+                    b.HasOne("AUTH-API.Core.Entities.UserEntity", "User")
                         .WithMany("Tokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -251,15 +251,15 @@ namespace API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("API.Core.Entities.UserRoleEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.UserRoleEntity", b =>
                 {
-                    b.HasOne("API.Core.Entities.RoleEntity", "Role")
+                    b.HasOne("AUTH-API.Core.Entities.RoleEntity", "Role")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("API.Core.Entities.UserEntity", "User")
+                    b.HasOne("AUTH-API.Core.Entities.UserEntity", "User")
                         .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -270,12 +270,12 @@ namespace API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("API.Core.Entities.RoleEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.RoleEntity", b =>
                 {
                     b.Navigation("UserRoles");
                 });
 
-            modelBuilder.Entity("API.Core.Entities.UserEntity", b =>
+            modelBuilder.Entity("AUTH-API.Core.Entities.UserEntity", b =>
                 {
                     b.Navigation("Tokens");
 
