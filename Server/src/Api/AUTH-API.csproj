@@ -5,10 +5,11 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <LangVersion>11</LangVersion>
+        <RootNamespace>API</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="API.UnitTests" />
+        <InternalsVisibleTo Include="AUTH-API.UnitTests" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="FluentResults" Version="3.16.0" />
