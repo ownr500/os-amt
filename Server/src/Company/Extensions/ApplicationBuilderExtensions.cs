@@ -1,3 +1,4 @@
+using Company.Configurations;
 using Company.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,5 +10,15 @@ internal static class ApplicationBuilderExtensions
     {
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseSqlServer(connectionString));
+    }
+
+    public static void RegisterConfigurationOptions(this WebApplicationBuilder builder)
+    {
+        builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
+    }
+
+    public static void RegisterServices(this WebApplicationBuilder builder)
+    {
+        
     }
 }
