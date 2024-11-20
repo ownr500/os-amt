@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.RegisterConfigurationOptions();
 builder.RegisterServices();
+builder.RegisterMassTransit();
 builder.RegisterOptions();
 builder.RegisterDbContext();
 builder.RegisterHangfire();

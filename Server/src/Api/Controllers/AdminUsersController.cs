@@ -2,7 +2,6 @@
 using API.Core.Enums;
 using API.Core.Services;
 using API.Extensions;
-using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -33,4 +33,11 @@ public class TokensController : ControllerBase
         await _tokenService.RevokeTokensAsync(ct);
         return Ok();
     }
+
+    [HttpPost("isrevoked/{token}")]
+    public async Task<IActionResult> IsRevoked([FromRoute] string token)
+    {
+        var isRevoked = await _tokenService.IsTokenRevokedAsync(token);
+        return Ok(new { IsRevoked = isRevoked });
+    }
 }

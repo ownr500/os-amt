@@ -190,6 +190,11 @@ public class TokenService : ITokenService
         return await _dbContext.RevokedTokens.AnyAsync(x => x.Token == token);
     }
 
+    public async Task<bool> IsTokenRevokedAsync(string token)
+    {
+        return await _dbContext.RevokedTokens.AnyAsync(x => x.Token == token);
+    }
+
     public async Task RevokeTokensAsync(CancellationToken ct)
     {
         var userId = _httpContextService.GetUserIdFromContext();

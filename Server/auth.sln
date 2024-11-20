@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company", "src\Company\Comp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company.UnitTests", "src\Company.UnitTests\Company.UnitTests.csproj", "{C116DE67-5D38-473D-A1AA-50014C58570D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthContractMessages", "AuthContractMessages\AuthContractMessages.csproj", "{455B3C7D-802F-4866-A224-D72F7330AA75}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{C116DE67-5D38-473D-A1AA-50014C58570D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C116DE67-5D38-473D-A1AA-50014C58570D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C116DE67-5D38-473D-A1AA-50014C58570D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{455B3C7D-802F-4866-A224-D72F7330AA75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{455B3C7D-802F-4866-A224-D72F7330AA75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{455B3C7D-802F-4866-A224-D72F7330AA75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{455B3C7D-802F-4866-A224-D72F7330AA75}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

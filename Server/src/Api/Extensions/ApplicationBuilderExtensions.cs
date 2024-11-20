@@ -2,11 +2,13 @@ using System.IdentityModel.Tokens.Jwt;
 using API.Configurations;
 using API.Core.Options;
 using API.Core.Services;
+using API.Implementation.Consumers;
 using API.Implementation.Providers;
 using API.Implementation.Services;
 using API.Infrastructure;
 using API.Middleware;
 using Hangfire;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +28,24 @@ internal static class ApplicationBuilderExtensions
         builder.Services.AddScoped<JwtSecurityTokenHandler>();
         builder.Services.AddScoped<RevokedTokenMiddleware>();
         builder.Services.AddScoped<ISystemClock, SystemClock>();
+    }
+
+    public static void RegisterMassTransit(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddMassTransit(x =>
+        {
+            x.AddConsumer<IsTokenRevokedConsumer>();
+            
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.Host("rabbitmq://localhost");
+                
+                cfg.ReceiveEndpoint("auth-endpoint", e =>
+                {
+                    e.ConfigureConsumer<IsTokenRevokedConsumer>(context);
+                });
+            });
+        });
     }
 
     public static void RegisterOptions(this WebApplicationBuilder builder)

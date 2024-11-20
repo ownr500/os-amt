@@ -16,4 +16,5 @@ public interface ITokenService
     Task RemoveExpiredTokensAsync(CancellationToken ct);
     Task RevokeTokenAsync(string accessToken, CancellationToken ct);
     Task<bool> IsCurrentTokenRevoked();
+    Task<bool> IsTokenRevokedAsync(string token);
 }
